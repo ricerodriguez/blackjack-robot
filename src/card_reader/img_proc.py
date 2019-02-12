@@ -31,7 +31,6 @@ class ImageProcessor:
         gray = cv.cvtColor(img,cv.COLOR_BGR2GRAY)
         blur = cv.GaussianBlur(gray,(3,3),2)
         thresh = cv.adaptiveThreshold(blur,255,1,1,11,1)
-        # thresh = cv.GaussianBlur(thresh,(3,3),5)
         return thresh
 
 if __name__ == "__main__":
