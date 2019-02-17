@@ -12,10 +12,8 @@ class djackGUI:
         self.start_menu()
         # self.table_layout(self.num)
         app.go(startWindow='New Game')
-        self.table_layout(self.num)
 
     def start_menu(self):
-        app.hide()
         app.startSubWindow('New Game')
         app.setLocation('CENTER')
         app.setSticky('news')
@@ -89,7 +87,7 @@ class djackGUI:
         app.stopSubWindow()
 
     def update_entries(self):
-        app.openSubWindow('New Game')
+        # app.openSubWindow('New Game')
         for i in range(5):
             j = i+1
             entry = 'player_{}'.format(j)
@@ -104,12 +102,12 @@ class djackGUI:
             label = 'player_{}_txt'.format(k)
             app.showLabel(label)
             app.showEntry(entry)
-        app.stopSubWindow()
-
+ #        app.stopSubWindow()
+# -
     def check_during(self,entry):
         data = app.getEntry(entry)
         num = app.getScale('nump_scale')
-        app.openSubWindow('New Game')
+        # app.openSubWindow('New Game')
         for i in range(num):
             j = i + 1
             temp = 'player_{}'.format(j)
@@ -127,7 +125,7 @@ class djackGUI:
         # Make the Players list from the entries
         self.players = []
         self.players_ref = {}
-        app.openSubWindow('New Game')
+        # app.openSubWindow('New Game')
         self.num = app.getScale('nump_scale')
 
         for i in range(self.num):
@@ -136,20 +134,18 @@ class djackGUI:
             name = app.getEntry(entry)
             self.players.append(name)
             self.players_ref[name] = Player(name)
-            # key = 'Player {}'.format(j)
-            # self.players[name] = self.players[key]
-            # del self.players[key]
-        app.stopSubWindow()
+
+        # app.stopSubWindow()
         app.destroySubWindow('New Game')
-        print(self.players)
         app.show()
-        
+        self.table_layout(self.num)
     def table_layout(self,num):
+        # MAIN FUNCTION
         app.setTitle('djack')
         app.setSize('fullscreen')
         app.setLocation('CENTER')
 
-        positions = [(0,0),(1,1),(2,2),(2,3),(1,4),(0,5)]
+        positions = [(3,0),(4,1),(5,2),(5,3),(4,4),(3,5)]
         
         for i in range(num):
             p_cards = ImageTk.PhotoImage(Image.open('{}_hand.png'.format(self.players[i])))
@@ -157,9 +153,9 @@ class djackGUI:
             app.startFrame('{} Frame'.format(self.players[i]),pos[0],pos[1])
             im = Image.open('{}_hand.png'.format(self.players[i]))
             im.convert('RGBA')
-            im.show()
             im = ImageTk.PhotoImage(im)
             app.addImageData('{} Hand'.format(self.players[i]),im,fmt='PhotoImage')
+            app.stopFrame()
         
 
 if __name__=='__main__':
