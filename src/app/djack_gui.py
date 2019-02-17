@@ -1,35 +1,21 @@
 from PIL import Image,ImageTk
 from appJar import gui
 from player_info import PlayerHand, Player
-from resource_loader import ResourceLoader
+import numpy as np
 
 app = gui('djack')
 
 class djackGUI:
     def __init__(self, num_players=1):
-        self.num_players = num_players
-
-        # # Make a Player reference for each possible player
-        # temp_p = Player()
-        # temp_players = [temp_p]
-
-        # for i in range(4):
-        #     temp = Player()
-        #     temp_players.append(temp)
-
-        # # Make a Python Dictionary to map names to references
-        # self.players = {
-        #     'Player 1' : temp_players[0],
-        #     'Player 2' : temp_players[1],
-        #     'Player 3' : temp_players[2],
-        #     'Player 4' : temp_players[3],
-        #     'Player 5' : temp_players[4]
-        # }
+        self.num = num_players
         
         self.start_menu()
-        # self.table_layout()
+        # self.table_layout(self.num)
+        app.go(startWindow='New Game')
+        self.table_layout(self.num)
 
     def start_menu(self):
+        app.hide()
         app.startSubWindow('New Game')
         app.setLocation('CENTER')
         app.setSticky('news')
@@ -57,15 +43,15 @@ class djackGUI:
         # Add labels and entries
         app.addLabel('players_label','Add Players:',row,0,2)
         app.addLabel('player_1_txt','Name: ',row+1,0)
-        app.addEntry('player_1','p',1,2)
+        app.addValidationEntry('player_1','p',1,2)
         app.addLabel('player_2_txt','Name: ',row+2,0)
-        app.addEntry('player_2','p',1,2)
+        app.addValidationEntry('player_2','p',1,2)
         app.addLabel('player_3_txt','Name: ',row+3,0)
-        app.addEntry('player_3','p',1,2)
+        app.addValidationEntry('player_3','p',1,2)
         app.addLabel('player_4_txt','Name: ',row+4,0)
-        app.addEntry('player_4','p',1,2)
+        app.addValidationEntry('player_4','p',1,2)
         app.addLabel('player_5_txt','Name: ',row+5,0)
-        app.addEntry('player_5','p',1,2)
+        app.addValidationEntry('player_5','p',1,2)
 
         # Set entry defaults
         app.setEntryDefault('player_1','Jack B.')
@@ -73,6 +59,13 @@ class djackGUI:
         app.setEntryDefault('player_3','Jack B.')
         app.setEntryDefault('player_4','Jack B.')
         app.setEntryDefault('player_5','Jack B.')
+
+        # Set entry checks
+        app.setEntryChangeFunction('player_1',self.check_during)
+        app.setEntryChangeFunction('player_2',self.check_during)
+        app.setEntryChangeFunction('player_3',self.check_during)
+        app.setEntryChangeFunction('player_4',self.check_during)
+        app.setEntryChangeFunction('player_5',self.check_during)
 
         # Hide labels
         app.hideLabel('player_2_txt')
@@ -91,8 +84,9 @@ class djackGUI:
 
         # Add start game button
         app.addNamedButton('START GAME!','start',self.close_start,row,0,2)
+        app.setButtonState('start','disabled')
+        app.setButtonSubmitFunction('start',self.close_start)
         app.stopSubWindow()
-        app.go(startWindow='New Game')
 
     def update_entries(self):
         app.openSubWindow('New Game')
@@ -111,14 +105,32 @@ class djackGUI:
             app.showLabel(label)
             app.showEntry(entry)
         app.stopSubWindow()
+
+    def check_during(self,entry):
+        data = app.getEntry(entry)
+        num = app.getScale('nump_scale')
+        app.openSubWindow('New Game')
+        for i in range(num):
+            j = i + 1
+            temp = 'player_{}'.format(j)
+            check = app.getEntry(temp)
+            if ((data == check) and temp != entry):
+                app.setEntryInvalid(entry)
+                app.setButtonState('start','disabled')
+                break
+            else:
+                app.setEntryValid(entry)
+                app.setButtonState('start','normal')
+                continue
         
     def close_start(self):
         # Make the Players list from the entries
         self.players = []
         self.players_ref = {}
         app.openSubWindow('New Game')
-        num = app.getScale('nump_scale')
-        for i in range(num):
+        self.num = app.getScale('nump_scale')
+
+        for i in range(self.num):
             j = i+1
             entry = 'player_{}'.format(j)
             name = app.getEntry(entry)
@@ -127,13 +139,11 @@ class djackGUI:
             # key = 'Player {}'.format(j)
             # self.players[name] = self.players[key]
             # del self.players[key]
-
-        app.stopSubWindow()    
+        app.stopSubWindow()
         app.destroySubWindow('New Game')
         print(self.players)
         app.show()
-        self.table_layout(num)
-
+        
     def table_layout(self,num):
         app.setTitle('djack')
         app.setSize('fullscreen')
@@ -142,13 +152,15 @@ class djackGUI:
         positions = [(0,0),(1,1),(2,2),(2,3),(1,4),(0,5)]
         
         for i in range(num):
-            p_cards = ImageTk.PhotoImage(Image.open('{}_hand.gif'.format(self.players[i])))
+            p_cards = ImageTk.PhotoImage(Image.open('{}_hand.png'.format(self.players[i])))
             pos = list(positions[i])
             app.startFrame('{} Frame'.format(self.players[i]),pos[0],pos[1])
-            app.addImageData('{} Hand'.format(self.players[i]),p_cards,fmt='PhotoImage')
-            # app.addImage('{} Hand'.format(self.players[i]),'{}_hand.gif'.format(self.players[i]))
-            
-        # app.addImage('test','Cards/deck_02/2C.png')
+            im = Image.open('{}_hand.png'.format(self.players[i]))
+            im.convert('RGBA')
+            im.show()
+            im = ImageTk.PhotoImage(im)
+            app.addImageData('{} Hand'.format(self.players[i]),im,fmt='PhotoImage')
+        
 
 if __name__=='__main__':
     dj = djackGUI()

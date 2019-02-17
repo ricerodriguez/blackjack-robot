@@ -169,16 +169,22 @@ class PlayerHand:
         canvas = Image.new('RGBA',(img_w,img_h),(51,255,51,255))
         rotate = True
         angles = []
+        offset = []
         if (len(self.pillows) == 2):
-            angles = [45, 315]
+            angles = [30, 330]
+            offset = [2/6,4/6]
         elif (len(self.pillows) == 3):
             angles = [60, 0, 300]
+            offset = [2/6,3/6,4/6]
         elif (len(self.pillows) == 4):
             angles = [45, 15, 345, 315]
+            offset = [1/5,2/5,3/5,4/5]
         elif (len(self.pillows) == 5):
             angles = [60, 30, 0, 330, 300]
+            offset = [1/6,2/6,3/6,4/6,5/6]
         elif (len(self.pillows) == 6):
             angles = [90, 60, 30, 330, 300, 270]
+            offset = [1/6,2/6,3/6,4/6,5/6,6/6]
         else:
             rotate = False
 
@@ -191,10 +197,11 @@ class PlayerHand:
                 working = self.pillows[i]
                 rotated = working.rotate(angles[i],expand=True)
                 half_w = int((canvas.size[0]-rotated.size[0])/2)
+                half_w = int((half_w + offset[i]*half_w)/2+half_w/4)
                 half_h = int((canvas.size[1]-rotated.size[1])/2)
                 # rotated.show()
                 canvas.paste(rotated,(half_w, half_h),rotated)
-                canvas.show()
+                # canvas.show()
                 # pixdata = rotated.load()
                 # for y in range(rotated.size[1]):
                 #     for x in range(rotated.size[0]):
@@ -232,9 +239,9 @@ class PlayerHand:
             for y in range(canvas.size[1]):
                 if pixdata[x, y] == (51, 255, 51, 255):
                     pixdata[x, y] = (0, 0, 0, 0)
-        canvas.show()
-        self.hand_pic = canvas
-        self.hand_pic.save('{}_hand.gif'.format(self.player_name),'GIF',transparency=0)
+        # canvas.show()
+        self.hand_pic = canvas.copy()
+        canvas.save('{}_hand.png'.format(self.player_name))
         # self.hand_pic.show()
                     
     def get_count(self):

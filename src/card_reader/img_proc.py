@@ -1,11 +1,11 @@
 import cv2 as cv
-import sys, numpy
+import sys, numpy, pytesseract
+from PIL import Image
 
 class ImageProcessor:
     def __init__(self, img1, img2):
         # self.path = pathname
         self.img = cv.imread(cv.samples.findFile(img1))
-        print('does it work???')
         self.img2 = cv.imread(cv.samples.findFile(img2))
         # Exit if can't find source file
         if self.img is None:
@@ -21,6 +21,7 @@ class ImageProcessor:
         diff = cv.GaussianBlur(diff,(3,3),5)
         flag, diff = cv.threshold(diff,200,255,cv.THRESH_BINARY)
         print(numpy.sum(diff))
+        print(pytesseract.image_to_string(Image.fromarray(img2)))
         cv.imshow('image1',img1)
         cv.imshow('image2',img2)
         cv.imshow('diff',diff)
@@ -29,7 +30,7 @@ class ImageProcessor:
 
     def threshold_img(self,img):
         gray = cv.cvtColor(img,cv.COLOR_BGR2GRAY)
-        blur = cv.GaussianBlur(gray,(3,3),2)
+        blur = cv.GaussianBlur(gray,(7,7),2)
         thresh = cv.adaptiveThreshold(blur,255,1,1,11,1)
         return thresh
 
