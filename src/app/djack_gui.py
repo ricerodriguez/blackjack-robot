@@ -1,14 +1,17 @@
 from PIL import Image,ImageTk
 from appJar import gui
 from player_info import PlayerHand, Player
+import simpleaudio as beats
 import numpy as np
 
 app = gui('djack')
+app.setBg('green')
+
 
 class djackGUI:
     def __init__(self, num_players=1):
         self.num = num_players
-        
+        self.started = False
         self.start_menu()
         # self.table_layout(self.num)
         app.go(startWindow='New Game')
@@ -18,14 +21,19 @@ class djackGUI:
         app.setLocation('CENTER')
         app.setSticky('news')
         app.setPadding([20,20])
+        app.setFont(size=16,family='Modern Sans')
 
+        self.music_wave = beats.WaveObject.from_wave_file('sounds/Insert-Quarter.wav')
+        self.music = self.music_wave.play()
+        
+        # app.showSplash('djack','white','white','black',44)
         # Welcome image
         app.addLabel('logo','djack',0,0,2)
         app.getLabelWidget('logo').config(font='Modern\ Sans 62')
         
         # Add scale to set number of players
+        app.setFont(size=16,family='URW Gothic')        
         app.addLabel('nump_txt','How many players are participating in this game?',1,0,4)
-        app.setFont(size=16,family='URW Gothic')
 
         # Update the row and change the scale settings
         row = app.getRow()
@@ -84,8 +92,22 @@ class djackGUI:
         app.addNamedButton('START GAME!','start',self.close_start,row,0,2)
         app.setButtonState('start','disabled')
         app.setButtonSubmitFunction('start',self.close_start)
+
+        app.registerEvent(self.play_music)
+        
         app.stopSubWindow()
 
+    def play_music(self):
+        if not (self.music.is_playing()):
+            self.music = self.music_wave.play()
+        else:
+            pass
+        # if not (self.started or self.music.is_playing()):
+        #     self.music = self.music_wave.play()
+        # else:
+        #     pass
+    
+    
     def update_entries(self):
         # app.openSubWindow('New Game')
         for i in range(5):
@@ -115,6 +137,7 @@ class djackGUI:
             if ((data == check) and temp != entry):
                 app.setEntryInvalid(entry)
                 app.setButtonState('start','disabled')
+                # app.soundError()
                 break
             else:
                 app.setEntryValid(entry)
@@ -136,26 +159,25 @@ class djackGUI:
             self.players_ref[name] = Player(name)
 
         # app.stopSubWindow()
+        beats.stop_all()
+        self.started = True
         app.destroySubWindow('New Game')
         app.show()
         self.table_layout(self.num)
+        
     def table_layout(self,num):
         # MAIN FUNCTION
         app.setTitle('djack')
         app.setSize('fullscreen')
-        app.setLocation('CENTER')
-
-        positions = [(3,0),(4,1),(5,2),(5,3),(4,4),(3,5)]
-        
+        self.music_wave = beats.WaveObject.from_wave_file('sounds/Arcade-Puzzler_v001.wav')
+        row = app.getRow()
         for i in range(num):
-            p_cards = ImageTk.PhotoImage(Image.open('{}_hand.png'.format(self.players[i])))
-            pos = list(positions[i])
-            app.startFrame('{} Frame'.format(self.players[i]),pos[0],pos[1])
+            app.addLabel('{}'.format(self.players[i]),row=row,column=i)
             im = Image.open('{}_hand.png'.format(self.players[i]))
             im.convert('RGBA')
             im = ImageTk.PhotoImage(im)
-            app.addImageData('{} Hand'.format(self.players[i]),im,fmt='PhotoImage')
-            app.stopFrame()
+            r = row+1
+            app.addImageData('{} Hand'.format(self.players[i]),im,fmt='PhotoImage',row=r,column=i)
         
 
 if __name__=='__main__':
