@@ -188,10 +188,6 @@ class PlayerHand:
         else:
             rotate = False
 
-
-        # offset = [
-        #          [0,]]
-        # working_canvas = Image.new('RGBA',self.pillows[i].size,(0,0,0,0))
         for i,img in enumerate(self.pillows):
             if (rotate):
                 working = self.pillows[i]
@@ -201,48 +197,19 @@ class PlayerHand:
                 half_h = int((canvas.size[1]-rotated.size[1])/2)
                 # rotated.show()
                 canvas.paste(rotated,(half_w, half_h),rotated)
-                # canvas.show()
-                # pixdata = rotated.load()
-                # for y in range(rotated.size[1]):
-                #     for x in range(rotated.size[0]):
-                #         if pixdata[x, y] == (51, 255, 51, 255):
-                #             pixdata[x, y] = (0, 0, 0, 0)
-
 
             else: 
                 working = self.pillows[i]
                 canvas.paste(working,(half_w, half_h))
-                       
-            # if (len(self.pillows) > 1):
-            #     angle = angle + incrementer
-            #     working_img = self.pillows[i]
-            #     rotated = working_img.rotate(angle,expand=True)
-            #     canvas.paste(working_img,(half_w, half_h),working_img)
-            #     pixdata = working_img.load()
-            #     for y in range(working_img.size[1]):
-            #         for x in range(working_img.size[0]):
-            #             if pixdata[x, y] == (51, 255, 51, 255):
-            #                 pixdata[x, y] = (0, 0, 0, 0)
-            #     # canvas.show()
-            #     # self.hand_pic.paste(working_img,(half_w, half_h),working_img)
-            #     # Image.composite(self.hand_pic,
-            # else:
-            #     working_img = self.pillows[i]
-            #     canvas.paste(working_img,(half_w, half_h),working_img)
-            #     pixdata = working_img.load()
-            #     for y in range(working_img.size[1]):
-            #         for x in range(working_img.size[0]):
-            #             if pixdata[x, y] == (51, 255, 51, 255):
-            #                 pixdata[x, y] = (0, 0, 0, 0)
+
         pixdata = canvas.load()
         for x in range(canvas.size[0]):
             for y in range(canvas.size[1]):
                 if pixdata[x, y] == (51, 255, 51, 255):
                     pixdata[x, y] = (0, 0, 0, 0)
-        # canvas.show()
+
         self.hand_pic = canvas.copy()
         canvas.save('{}_hand.png'.format(self.player_name))
-        # self.hand_pic.show()
                     
     def get_count(self):
         return len(self.hand)
