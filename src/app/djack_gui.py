@@ -174,17 +174,29 @@ class djackGUI:
         app.addImageData('dealer deck',dealer_deck,fmt='PhotoImage',row=row,column=dealer_col)
 
         row = app.getRow()
+
+        # Make images for each command
+        im_hit = Image.open('resources/commands/hit_me.png')
+        im_hit.convert('RGBA')
+        im_hit = ImageTk.PhotoImage(im_hit)
+
+        im_stand = Image.open('resources/commands/stand.png')
+        im_stand.convert('RGBA')
+        im_stand = ImageTk.PhotoImage(im_stand)
         
         for i in range(num):
             # app.setStretch('none')
+            app.addImageData('{} speech'.format(self.players[i]), im_hit,fmt='PhotoImage',row=row,column=i)
+            app.hideImage('{} speech'.format(self.players[i]))
+            r = row + 1
             player = self.players_ref.get(self.players[i])
             label = '{0}\nScore: {1}'.format(self.players[i],player.score)
-            app.addLabel('{}'.format(self.players[i]),label,row=row,column=i)
+            app.addLabel('{}'.format(self.players[i]),label,row=r,column=i)
             app.setLabelSticky('{}'.format(self.players[i]),'s')
             im = Image.open('{}_hand.png'.format(self.players[i]))
             im.convert('RGBA')
             im = ImageTk.PhotoImage(im)
-            r = row+1
+            r += 1
             app.setSticky('n')
             app.addImageData('{} Hand'.format(self.players[i]),im,fmt='PhotoImage',row=r,column=i)
         
