@@ -18,7 +18,7 @@ class djackGUI:
         app.setSticky('news')
         app.setPadding([20,20])
 
-        self.music_wave = beats.WaveObject.from_wave_file('sounds/Insert-Quarter.wav')
+        self.music_wave = beats.WaveObject.from_wave_file('resources/sounds/Insert-Quarter.wav')
         self.music = self.music_wave.play()
         
         # app.showSplash('djack','white','white','black',44)
@@ -163,8 +163,18 @@ class djackGUI:
         app.setBg('firebrick3')
 
         # Lay down some fresh beats
-        self.music_wave = beats.WaveObject.from_wave_file('sounds/Arcade-Puzzler_v001.wav')
+        self.music_wave = beats.WaveObject.from_wave_file('resources/sounds/Arcade-Puzzler_v001.wav')
         row = app.getRow()
+
+        dealer_deck = Image.open('resources/deck_01/large/Back_Blue_1.png')
+        dealer_deck.convert('RGBA')
+        dealer_deck = ImageTk.PhotoImage(dealer_deck)
+
+        dealer_col = int(num/2)
+        app.addImageData('dealer deck',dealer_deck,fmt='PhotoImage',row=row,column=dealer_col)
+
+        row = app.getRow()
+        
         for i in range(num):
             # app.setStretch('none')
             player = self.players_ref.get(self.players[i])
