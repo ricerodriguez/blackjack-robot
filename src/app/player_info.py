@@ -111,7 +111,8 @@ CARD_VALUES = [
 
 
 class PlayerHand:
-    def __init__(self, card, deck=2, player='Jack'):
+    def __init__(self, card, deck=2, player='Jack',card_size='medium'):
+        self.__card_size = card_size
         which_deck = {
             1: self.__deck_01,
             2: self.__deck_02,
@@ -119,6 +120,8 @@ class PlayerHand:
         }
         get_deck = which_deck.get(deck,lambda:__deck_01)
         get_deck()
+
+        self.deck_pick = deck
         self.hand_pic = Image.new('RGBA',(396,216),(51,255,51,255)) # 1980/5 x 1080/5
         self.player_name = player
         self.hand = [card]
@@ -193,7 +196,7 @@ class PlayerHand:
                 working = self.pillows[i]
                 rotated = working.rotate(angles[i],expand=True)
                 half_w = int((canvas.size[0]-rotated.size[0])/2)
-                half_w = int((half_w + offset[i]*half_w)/2+half_w/4)
+                half_w = int((half_w + 2*offset[i]*half_w)/2+half_w/4)
                 half_h = int((canvas.size[1]-rotated.size[1])/2)
                 # rotated.show()
                 canvas.paste(rotated,(half_w, half_h),rotated)
@@ -208,184 +211,211 @@ class PlayerHand:
                 if pixdata[x, y] == (51, 255, 51, 255):
                     pixdata[x, y] = (0, 0, 0, 0)
 
-        self.hand_pic = canvas.copy()
-        canvas.save('{}_hand.png'.format(self.player_name))
-                    
-    def get_count(self):
-        return len(self.hand)
+        canvasBox = canvas.getbbox()
+        self.hand_pic = canvas.crop(canvasBox)
+        self.hand_pic.save('{}_hand.png'.format(self.player_name))
 
-    def get_hand(self):
-        return self.hand
+    @property
+    def deck(self):
+        which_deck = {
+            1: self.__deck_01,
+            2: self.__deck_02,
+            3: self.__deck_03
+        }
+        get_deck = which_deck.get(self.deck_pick,lambda:__deck_01)
+        return get_deck()
 
-    def get_deck(self):
-        return self.deck
+    @deck.setter
+    def deck(self,pick):
+        self.deck_pick = pick
+        which_deck = {
+            1: self.__deck_01,
+            2: self.__deck_02,
+            3: self.__deck_03
+        }
+        get_deck = which_deck.get(pick,lambda:__deck_01)
+        self.deck = get_deck()
+
+    @property
+    def card_size(self):
+        return self.__card_size
+
+    @card_size.setter
+    def card_size(self,size):
+        self.__card_size = size
+        deck = self.deck
+        self.update_images()
 
     def __deck_01(self):
-        self.deck = {
-            "Clubs Ace": "Cards/deck_01/Clubs_1.png",
-            "Clubs 2": "Cards/deck_01/Clubs_2.png",
-            "Clubs 3": "Cards/deck_01/Clubs_3.png",
-            "Clubs 4": "Cards/deck_01/Clubs_4.png",
-            "Clubs 5": "Cards/deck_01/Clubs_5.png",
-            "Clubs 6": "Cards/deck_01/Clubs_6.png",
-            "Clubs 7": "Cards/deck_01/Clubs_7.png",
-            "Clubs 8": "Cards/deck_01/Clubs_8.png",
-            "Clubs 9": "Cards/deck_01/Clubs_9.png",
-            "Clubs 10": "Cards/deck_01/Clubs_10.png",
-            "Clubs Jack": "Cards/deck_01/Clubs_11.png",
-            "Clubs Queen": "Cards/deck_01/Clubs_12.png",
-            "Clubs King": "Cards/deck_01/Clubs_13.png",
-            "Diamonds Ace": "Cards/deck_01/Diamond_1.png",
-            "Diamonds 2": "Cards/deck_01/Diamond_2.png",
-            "Diamonds 3": "Cards/deck_01/Diamond_3.png",
-            "Diamonds 4": "Cards/deck_01/Diamond_4.png",
-            "Diamonds 5": "Cards/deck_01/Diamond_5.png",
-            "Diamonds 6": "Cards/deck_01/Diamond_6.png",
-            "Diamonds 7": "Cards/deck_01/Diamond_7.png",
-            "Diamonds 8": "Cards/deck_01/Diamond_8.png",
-            "Diamonds 9": "Cards/deck_01/Diamond_9.png",
-            "Diamonds 10": "Cards/deck_01/Diamond_10.png",
-            "Diamonds Jack": "Cards/deck_01/Diamond_11.png",
-            "Diamonds Queen": "Cards/deck_01/Diamond_12.png",
-            "Diamonds King": "Cards/deck_01/Diamond_13.png",
-            "Hearts Ace": "Cards/deck_01/Hearts_1.png",
-            "Hearts 2": "Cards/deck_01/Hearts_2.png",
-            "Hearts 3": "Cards/deck_01/Hearts_3.png",
-            "Hearts 4": "Cards/deck_01/Hearts_4.png",
-            "Hearts 5": "Cards/deck_01/Hearts_5.png",
-            "Hearts 6": "Cards/deck_01/Hearts_6.png",
-            "Hearts 7": "Cards/deck_01/Hearts_7.png",
-            "Hearts 8": "Cards/deck_01/Hearts_8.png",
-            "Hearts 9": "Cards/deck_01/Hearts_9.png",
-            "Hearts 10": "Cards/deck_01/Hearts_10.png",
-            "Hearts Jack": "Cards/deck_01/Hearts_11.png",
-            "Hearts Queen": "Cards/deck_01/Hearts_12.png",
-            "Hearts King": "Cards/deck_01/Hearts_13.png",
-            "Spades Ace": "Cards/deck_01/Spades_1.png",
-            "Spades 2": "Cards/deck_01/Spades_2.png",
-            "Spades 3": "Cards/deck_01/Spades_3.png",
-            "Spades 4": "Cards/deck_01/Spades_4.png",
-            "Spades 5": "Cards/deck_01/Spades_5.png",
-            "Spades 6": "Cards/deck_01/Spades_6.png",
-            "Spades 7": "Cards/deck_01/Spades_7.png",
-            "Spades 8": "Cards/deck_01/Spades_8.png",
-            "Spades 9": "Cards/deck_01/Spades_9.png",
-            "Spades 10": "Cards/deck_01/Spades_10.png",
-            "Spades Jack": "Cards/deck_01/Spades_11.png",
-            "Spades Queen": "Cards/deck_01/Spades_12.png",
-            "Spades King": "Cards/deck_01/Spades_13.png"
+        deck = {
+            "Clubs Ace": "Cards/deck_01/{}/Clubs_1.png".format(self.__card_size),
+            "Clubs 2": "Cards/deck_01/{}/Clubs_2.png".format(self.__card_size),
+            "Clubs 3": "Cards/deck_01/{}/Clubs_3.png".format(self.__card_size),
+            "Clubs 4": "Cards/deck_01/{}/Clubs_4.png".format(self.__card_size),
+            "Clubs 5": "Cards/deck_01/{}/Clubs_5.png".format(self.__card_size),
+            "Clubs 6": "Cards/deck_01/{}/Clubs_6.png".format(self.__card_size),
+            "Clubs 7": "Cards/deck_01/{}/Clubs_7.png".format(self.__card_size),
+            "Clubs 8": "Cards/deck_01/{}/Clubs_8.png".format(self.__card_size),
+            "Clubs 9": "Cards/deck_01/{}/Clubs_9.png".format(self.__card_size),
+            "Clubs 10": "Cards/deck_01/{}/Clubs_10.png".format(self.__card_size),
+            "Clubs Jack": "Cards/deck_01/{}/Clubs_11.png".format(self.__card_size),
+            "Clubs Queen": "Cards/deck_01/{}/Clubs_12.png".format(self.__card_size),
+            "Clubs King": "Cards/deck_01/{}/Clubs_13.png".format(self.__card_size),
+            "Diamonds Ace": "Cards/deck_01/{}/Diamond_1.png".format(self.__card_size),
+            "Diamonds 2": "Cards/deck_01/{}/Diamond_2.png".format(self.__card_size),
+            "Diamonds 3": "Cards/deck_01/{}/Diamond_3.png".format(self.__card_size),
+            "Diamonds 4": "Cards/deck_01/{}/Diamond_4.png".format(self.__card_size),
+            "Diamonds 5": "Cards/deck_01/{}/Diamond_5.png".format(self.__card_size),
+            "Diamonds 6": "Cards/deck_01/{}/Diamond_6.png".format(self.__card_size),
+            "Diamonds 7": "Cards/deck_01/{}/Diamond_7.png".format(self.__card_size),
+            "Diamonds 8": "Cards/deck_01/{}/Diamond_8.png".format(self.__card_size),
+            "Diamonds 9": "Cards/deck_01/{}/Diamond_9.png".format(self.__card_size),
+            "Diamonds 10": "Cards/deck_01/{}/Diamond_10.png".format(self.__card_size),
+            "Diamonds Jack": "Cards/deck_01/{}/Diamond_11.png".format(self.__card_size),
+            "Diamonds Queen": "Cards/deck_01/{}/Diamond_12.png".format(self.__card_size),
+            "Diamonds King": "Cards/deck_01/{}/Diamond_13.png".format(self.__card_size),
+            "Hearts Ace": "Cards/deck_01/{}/Hearts_1.png".format(self.__card_size),
+            "Hearts 2": "Cards/deck_01/{}/Hearts_2.png".format(self.__card_size),
+            "Hearts 3": "Cards/deck_01/{}/Hearts_3.png".format(self.__card_size),
+            "Hearts 4": "Cards/deck_01/{}/Hearts_4.png".format(self.__card_size),
+            "Hearts 5": "Cards/deck_01/{}/Hearts_5.png".format(self.__card_size),
+            "Hearts 6": "Cards/deck_01/{}/Hearts_6.png".format(self.__card_size),
+            "Hearts 7": "Cards/deck_01/{}/Hearts_7.png".format(self.__card_size),
+            "Hearts 8": "Cards/deck_01/{}/Hearts_8.png".format(self.__card_size),
+            "Hearts 9": "Cards/deck_01/{}/Hearts_9.png".format(self.__card_size),
+            "Hearts 10": "Cards/deck_01/{}/Hearts_10.png".format(self.__card_size),
+            "Hearts Jack": "Cards/deck_01/{}/Hearts_11.png".format(self.__card_size),
+            "Hearts Queen": "Cards/deck_01/{}/Hearts_12.png".format(self.__card_size),
+            "Hearts King": "Cards/deck_01/{}/Hearts_13.png".format(self.__card_size),
+            "Spades Ace": "Cards/deck_01/{}/Spades_1.png".format(self.__card_size),
+            "Spades 2": "Cards/deck_01/{}/Spades_2.png".format(self.__card_size),
+            "Spades 3": "Cards/deck_01/{}/Spades_3.png".format(self.__card_size),
+            "Spades 4": "Cards/deck_01/{}/Spades_4.png".format(self.__card_size),
+            "Spades 5": "Cards/deck_01/{}/Spades_5.png".format(self.__card_size),
+            "Spades 6": "Cards/deck_01/{}/Spades_6.png".format(self.__card_size),
+            "Spades 7": "Cards/deck_01/{}/Spades_7.png".format(self.__card_size),
+            "Spades 8": "Cards/deck_01/{}/Spades_8.png".format(self.__card_size),
+            "Spades 9": "Cards/deck_01/{}/Spades_9.png".format(self.__card_size),
+            "Spades 10": "Cards/deck_01/{}/Spades_10.png".format(self.__card_size),
+            "Spades Jack": "Cards/deck_01/{}/Spades_11.png".format(self.__card_size),
+            "Spades Queen": "Cards/deck_01/{}/Spades_12.png".format(self.__card_size),
+            "Spades King": "Cards/deck_01/{}/Spades_13.png".format(self.__card_size)
             }
+        return deck
 
     def __deck_02(self):
-        self.deck = {
-            "Clubs Ace": "Cards/deck_02/AC.png",
-            "Clubs 2": "Cards/deck_02/2C.png",
-            "Clubs 3": "Cards/deck_02/3C.png",
-            "Clubs 4": "Cards/deck_02/4C.png",
-            "Clubs 5": "Cards/deck_02/5C.png",
-            "Clubs 6": "Cards/deck_02/6C.png",
-            "Clubs 7": "Cards/deck_02/7C.png",
-            "Clubs 8": "Cards/deck_02/8C.png",
-            "Clubs 9": "Cards/deck_02/9C.png",
-            "Clubs 10": "Cards/deck_02/10C.png",
-            "Clubs Jack": "Cards/deck_02/JC.png",
-            "Clubs Queen": "Cards/deck_02/QC.png",
-            "Clubs King": "Cards/deck_02/KC.png",
-            "Diamonds Ace": "Cards/deck_02/AD.png",
-            "Diamonds 2": "Cards/deck_02/2D.png",
-            "Diamonds 3": "Cards/deck_02/3D.png",
-            "Diamonds 4": "Cards/deck_02/4D.png",
-            "Diamonds 5": "Cards/deck_02/5D.png",
-            "Diamonds 6": "Cards/deck_02/6D.png",
-            "Diamonds 7": "Cards/deck_02/7D.png",
-            "Diamonds 8": "Cards/deck_02/8D.png",
-            "Diamonds 9": "Cards/deck_02/9D.png",
-            "Diamonds 10": "Cards/deck_02/10D.png",
-            "Diamonds Jack": "Cards/deck_02/JD.png",
-            "Diamonds Queen": "Cards/deck_02/QD.png",
-            "Diamonds King": "Cards/deck_02/KD.png",
-            "Spades Ace": "Cards/deck_02/AS.png",
-            "Spades 2": "Cards/deck_02/2S.png",
-            "Spades 3": "Cards/deck_02/3S.png",
-            "Spades 4": "Cards/deck_02/4S.png",
-            "Spades 5": "Cards/deck_02/5S.png",
-            "Spades 6": "Cards/deck_02/6S.png",
-            "Spades 7": "Cards/deck_02/7S.png",
-            "Spades 8": "Cards/deck_02/8S.png",
-            "Spades 9": "Cards/deck_02/9S.png",
-            "Spades 10": "Cards/deck_02/10S.png",
-            "Spades Jack": "Cards/deck_02/JS.png",
-            "Spades Queen": "Cards/deck_02/QS.png",
-            "Spades King": "Cards/deck_02/KS.png",
-            "Hearts Ace": "Cards/deck_02/AH.png",
-            "Hearts 2": "Cards/deck_02/2H.png",
-            "Hearts 3": "Cards/deck_02/3H.png",
-            "Hearts 4": "Cards/deck_02/4H.png",
-            "Hearts 5": "Cards/deck_02/5H.png",
-            "Hearts 6": "Cards/deck_02/6H.png",
-            "Hearts 7": "Cards/deck_02/7H.png",
-            "Hearts 8": "Cards/deck_02/8H.png",
-            "Hearts 9": "Cards/deck_02/9H.png",
-            "Hearts 10": "Cards/deck_02/10H.png",
-            "Hearts Jack": "Cards/deck_02/JH.png",
-            "Hearts Queen": "Cards/deck_02/QH.png",
-            "Hearts King": "Cards/deck_02/KH.png"
+        deck = {
+            "Clubs Ace": "Cards/deck_02/{}/AC.png".format(self.__card_size),
+            "Clubs 2": "Cards/deck_02/{}/2C.png".format(self.__card_size),
+            "Clubs 3": "Cards/deck_02/{}/3C.png".format(self.__card_size),
+            "Clubs 4": "Cards/deck_02/{}/4C.png".format(self.__card_size),
+            "Clubs 5": "Cards/deck_02/{}/5C.png".format(self.__card_size),
+            "Clubs 6": "Cards/deck_02/{}/6C.png".format(self.__card_size),
+            "Clubs 7": "Cards/deck_02/{}/7C.png".format(self.__card_size),
+            "Clubs 8": "Cards/deck_02/{}/8C.png".format(self.__card_size),
+            "Clubs 9": "Cards/deck_02/{}/9C.png".format(self.__card_size),
+            "Clubs 10": "Cards/deck_02/{}/10C.png".format(self.__card_size),
+            "Clubs Jack": "Cards/deck_02/{}/JC.png".format(self.__card_size),
+            "Clubs Queen": "Cards/deck_02/{}/QC.png".format(self.__card_size),
+            "Clubs King": "Cards/deck_02/{}/KC.png".format(self.__card_size),
+            "Diamonds Ace": "Cards/deck_02/{}/AD.png".format(self.__card_size),
+            "Diamonds 2": "Cards/deck_02/{}/2D.png".format(self.__card_size),
+            "Diamonds 3": "Cards/deck_02/{}/3D.png".format(self.__card_size),
+            "Diamonds 4": "Cards/deck_02/{}/4D.png".format(self.__card_size),
+            "Diamonds 5": "Cards/deck_02/{}/5D.png".format(self.__card_size),
+            "Diamonds 6": "Cards/deck_02/{}/6D.png".format(self.__card_size),
+            "Diamonds 7": "Cards/deck_02/{}/7D.png".format(self.__card_size),
+            "Diamonds 8": "Cards/deck_02/{}/8D.png".format(self.__card_size),
+            "Diamonds 9": "Cards/deck_02/{}/9D.png".format(self.__card_size),
+            "Diamonds 10": "Cards/deck_02/{}/10D.png".format(self.__card_size),
+            "Diamonds Jack": "Cards/deck_02/{}/JD.png".format(self.__card_size),
+            "Diamonds Queen": "Cards/deck_02/{}/QD.png".format(self.__card_size),
+            "Diamonds King": "Cards/deck_02/{}/KD.png".format(self.__card_size),
+            "Spades Ace": "Cards/deck_02/{}/AS.png".format(self.__card_size),
+            "Spades 2": "Cards/deck_02/{}/2S.png".format(self.__card_size),
+            "Spades 3": "Cards/deck_02/{}/3S.png".format(self.__card_size),
+            "Spades 4": "Cards/deck_02/{}/4S.png".format(self.__card_size),
+            "Spades 5": "Cards/deck_02/{}/5S.png".format(self.__card_size),
+            "Spades 6": "Cards/deck_02/{}/6S.png".format(self.__card_size),
+            "Spades 7": "Cards/deck_02/{}/7S.png".format(self.__card_size),
+            "Spades 8": "Cards/deck_02/{}/8S.png".format(self.__card_size),
+            "Spades 9": "Cards/deck_02/{}/9S.png".format(self.__card_size),
+            "Spades 10": "Cards/deck_02/{}/10S.png".format(self.__card_size),
+            "Spades Jack": "Cards/deck_02/{}/JS.png".format(self.__card_size),
+            "Spades Queen": "Cards/deck_02/{}/QS.png".format(self.__card_size),
+            "Spades King": "Cards/deck_02/{}/KS.png".format(self.__card_size),
+            "Hearts Ace": "Cards/deck_02/{}/AH.png".format(self.__card_size),
+            "Hearts 2": "Cards/deck_02/{}/2H.png".format(self.__card_size),
+            "Hearts 3": "Cards/deck_02/{}/3H.png".format(self.__card_size),
+            "Hearts 4": "Cards/deck_02/{}/4H.png".format(self.__card_size),
+            "Hearts 5": "Cards/deck_02/{}/5H.png".format(self.__card_size),
+            "Hearts 6": "Cards/deck_02/{}/6H.png".format(self.__card_size),
+            "Hearts 7": "Cards/deck_02/{}/7H.png".format(self.__card_size),
+            "Hearts 8": "Cards/deck_02/{}/8H.png".format(self.__card_size),
+            "Hearts 9": "Cards/deck_02/{}/9H.png".format(self.__card_size),
+            "Hearts 10": "Cards/deck_02/{}/10H.png".format(self.__card_size),
+            "Hearts Jack": "Cards/deck_02/{}/JH.png".format(self.__card_size),
+            "Hearts Queen": "Cards/deck_02/{}/QH.png".format(self.__card_size),
+            "Hearts King": "Cards/deck_02/{}/KH.png".format(self.__card_size)
             }
+        return deck
 
     def __deck_03(self):
-        self.deck = {
-            "Clubs Ace": "Cards/deck_03/ace_of_clubs.png",
-            "Clubs 2": "Cards/deck_03/2_of_clubs.png",
-            "Clubs 3": "Cards/deck_03/3_of_clubs.png",
-            "Clubs 4": "Cards/deck_03/4_of_clubs.png",
-            "Clubs 5": "Cards/deck_03/5_of_clubs.png",
-            "Clubs 6": "Cards/deck_03/6_of_clubs.png",
-            "Clubs 7": "Cards/deck_03/7_of_clubs.png",
-            "Clubs 8": "Cards/deck_03/8_of_clubs.png",
-            "Clubs 9": "Cards/deck_03/9_of_clubs.png",
-            "Clubs 10": "Cards/deck_03/10_of_clubs.png",
-            "Clubs Jack": "Cards/deck_03/jack_of_clubs.png",
-            "Clubs Queen": "Cards/deck_03/queen_of_clubs.png",
-            "Clubs King": "Cards/deck_03/king_of_clubs.png",
-            "Diamonds Ace": "Cards/deck_03/ace_of_diamonds.png",
-            "Diamonds 2": "Cards/deck_03/2_of_diamonds.png",
-            "Diamonds 3": "Cards/deck_03/3_of_diamonds.png",
-            "Diamonds 4": "Cards/deck_03/4_of_diamonds.png",
-            "Diamonds 5": "Cards/deck_03/5_of_diamonds.png",
-            "Diamonds 6": "Cards/deck_03/6_of_diamonds.png",
-            "Diamonds 7": "Cards/deck_03/7_of_diamonds.png",
-            "Diamonds 8": "Cards/deck_03/8_of_diamonds.png",
-            "Diamonds 9": "Cards/deck_03/9_of_diamonds.png",
-            "Diamonds 10": "Cards/deck_03/10_of_diamonds.png",
-            "Diamonds Jack": "Cards/deck_03/jack_of_diamonds.png",
-            "Diamonds Queen": "Cards/deck_03/queen_of_diamonds.png",
-            "Diamonds King": "Cards/deck_03/king_of_diamonds.png",
-            "Spades Ace": "Cards/deck_03/ace_of_spades.png",
-            "Spades 2": "Cards/deck_03/2_of_spades.png",
-            "Spades 3": "Cards/deck_03/3_of_spades.png",
-            "Spades 4": "Cards/deck_03/4_of_spades.png",
-            "Spades 5": "Cards/deck_03/5_of_spades.png",
-            "Spades 6": "Cards/deck_03/6_of_spades.png",
-            "Spades 7": "Cards/deck_03/7_of_spades.png",
-            "Spades 8": "Cards/deck_03/8_of_spades.png",
-            "Spades 9": "Cards/deck_03/9_of_spades.png",
-            "Spades 10": "Cards/deck_03/10_of_spades.png",
-            "Spades Jack": "Cards/deck_03/jack_of_spades.png",
-            "Spades Queen": "Cards/deck_03/queen_of_spades.png",
-            "Spades King": "Cards/deck_03/king_of_spades.png",
-            "Hearts Ace": "Cards/deck_03/ace_of_hearts.png",
-            "Hearts 2": "Cards/deck_03/2_of_hearts.png",
-            "Hearts 3": "Cards/deck_03/3_of_hearts.png",
-            "Hearts 4": "Cards/deck_03/4_of_hearts.png",
-            "Hearts 5": "Cards/deck_03/5_of_hearts.png",
-            "Hearts 6": "Cards/deck_03/6_of_hearts.png",
-            "Hearts 7": "Cards/deck_03/7_of_hearts.png",
-            "Hearts 8": "Cards/deck_03/8_of_hearts.png",
-            "Hearts 9": "Cards/deck_03/9_of_hearts.png",
-            "Hearts 10": "Cards/deck_03/10_of_hearts.png",
-            "Hearts Jack": "Cards/deck_03/jack_of_hearts.png",
-            "Hearts Queen": "Cards/deck_03/queen_of_hearts.png",
-            "Hearts King": "Cards/deck_03/king_of_hearts.png"}
+        deck = {
+            "Clubs Ace": "Cards/deck_03/{}/ace_of_clubs.png".format(self.__card_size),
+            "Clubs 2": "Cards/deck_03/{}/2_of_clubs.png".format(self.__card_size),
+            "Clubs 3": "Cards/deck_03/{}/3_of_clubs.png".format(self.__card_size),
+            "Clubs 4": "Cards/deck_03/{}/4_of_clubs.png".format(self.__card_size),
+            "Clubs 5": "Cards/deck_03/{}/5_of_clubs.png".format(self.__card_size),
+            "Clubs 6": "Cards/deck_03/{}/6_of_clubs.png".format(self.__card_size),
+            "Clubs 7": "Cards/deck_03/{}/7_of_clubs.png".format(self.__card_size),
+            "Clubs 8": "Cards/deck_03/{}/8_of_clubs.png".format(self.__card_size),
+            "Clubs 9": "Cards/deck_03/{}/9_of_clubs.png".format(self.__card_size),
+            "Clubs 10": "Cards/deck_03/{}/10_of_clubs.png".format(self.__card_size),
+            "Clubs Jack": "Cards/deck_03/{}/jack_of_clubs.png".format(self.__card_size),
+            "Clubs Queen": "Cards/deck_03/{}/queen_of_clubs.png".format(self.__card_size),
+            "Clubs King": "Cards/deck_03/{}/king_of_clubs.png".format(self.__card_size),
+            "Diamonds Ace": "Cards/deck_03/{}/ace_of_diamonds.png".format(self.__card_size),
+            "Diamonds 2": "Cards/deck_03/{}/2_of_diamonds.png".format(self.__card_size),
+            "Diamonds 3": "Cards/deck_03/{}/3_of_diamonds.png".format(self.__card_size),
+            "Diamonds 4": "Cards/deck_03/{}/4_of_diamonds.png".format(self.__card_size),
+            "Diamonds 5": "Cards/deck_03/{}/5_of_diamonds.png".format(self.__card_size),
+            "Diamonds 6": "Cards/deck_03/{}/6_of_diamonds.png".format(self.__card_size),
+            "Diamonds 7": "Cards/deck_03/{}/7_of_diamonds.png".format(self.__card_size),
+            "Diamonds 8": "Cards/deck_03/{}/8_of_diamonds.png".format(self.__card_size),
+            "Diamonds 9": "Cards/deck_03/{}/9_of_diamonds.png".format(self.__card_size),
+            "Diamonds 10": "Cards/deck_03/{}/10_of_diamonds.png".format(self.__card_size),
+            "Diamonds Jack": "Cards/deck_03/{}/jack_of_diamonds.png".format(self.__card_size),
+            "Diamonds Queen": "Cards/deck_03/{}/queen_of_diamonds.png".format(self.__card_size),
+            "Diamonds King": "Cards/deck_03/{}/king_of_diamonds.png".format(self.__card_size),
+            "Spades Ace": "Cards/deck_03/{}/ace_of_spades.png".format(self.__card_size),
+            "Spades 2": "Cards/deck_03/{}/2_of_spades.png".format(self.__card_size),
+            "Spades 3": "Cards/deck_03/{}/3_of_spades.png".format(self.__card_size),
+            "Spades 4": "Cards/deck_03/{}/4_of_spades.png".format(self.__card_size),
+            "Spades 5": "Cards/deck_03/{}/5_of_spades.png".format(self.__card_size),
+            "Spades 6": "Cards/deck_03/{}/6_of_spades.png".format(self.__card_size),
+            "Spades 7": "Cards/deck_03/{}/7_of_spades.png".format(self.__card_size),
+            "Spades 8": "Cards/deck_03/{}/8_of_spades.png".format(self.__card_size),
+            "Spades 9": "Cards/deck_03/{}/9_of_spades.png".format(self.__card_size),
+            "Spades 10": "Cards/deck_03/{}/10_of_spades.png".format(self.__card_size),
+            "Spades Jack": "Cards/deck_03/{}/jack_of_spades.png".format(self.__card_size),
+            "Spades Queen": "Cards/deck_03/{}/queen_of_spades.png".format(self.__card_size),
+            "Spades King": "Cards/deck_03/{}/king_of_spades.png".format(self.__card_size),
+            "Hearts Ace": "Cards/deck_03/{}/ace_of_hearts.png".format(self.__card_size),
+            "Hearts 2": "Cards/deck_03/{}/2_of_hearts.png".format(self.__card_size),
+            "Hearts 3": "Cards/deck_03/{}/3_of_hearts.png".format(self.__card_size),
+            "Hearts 4": "Cards/deck_03/{}/4_of_hearts.png".format(self.__card_size),
+            "Hearts 5": "Cards/deck_03/{}/5_of_hearts.png".format(self.__card_size),
+            "Hearts 6": "Cards/deck_03/{}/6_of_hearts.png".format(self.__card_size),
+            "Hearts 7": "Cards/deck_03/{}/7_of_hearts.png".format(self.__card_size),
+            "Hearts 8": "Cards/deck_03/{}/8_of_hearts.png".format(self.__card_size),
+            "Hearts 9": "Cards/deck_03/{}/9_of_hearts.png".format(self.__card_size),
+            "Hearts 10": "Cards/deck_03/{}/10_of_hearts.png".format(self.__card_size),
+            "Hearts Jack": "Cards/deck_03/{}/jack_of_hearts.png".format(self.__card_size),
+            "Hearts Queen": "Cards/deck_03/{}/queen_of_hearts.png".format(self.__card_size),
+            "Hearts King": "Cards/deck_03/{}/king_of_hearts.png".format(self.__card_size)
+        }
+        return deck
 
         
 class Player:
@@ -400,6 +430,7 @@ class Player:
 
         # Deal initial cards
         draw = random.randint(0,51)
+        self.update_score(draw)
         self.discard_pile = [draw]
         card = GENERAL_DECK[draw]
 

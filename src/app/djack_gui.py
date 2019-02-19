@@ -5,15 +5,11 @@ import simpleaudio as beats
 import numpy as np
 
 app = gui('djack')
-app.setBg('green')
-
 
 class djackGUI:
-    def __init__(self, num_players=1):
-        self.num = num_players
+    def __init__(self):
         self.started = False
         self.start_menu()
-        # self.table_layout(self.num)
         app.go(startWindow='New Game')
 
     def start_menu(self):
@@ -21,7 +17,6 @@ class djackGUI:
         app.setLocation('CENTER')
         app.setSticky('news')
         app.setPadding([20,20])
-        app.setFont(size=16,family='Modern Sans')
 
         self.music_wave = beats.WaveObject.from_wave_file('sounds/Insert-Quarter.wav')
         self.music = self.music_wave.play()
@@ -91,7 +86,8 @@ class djackGUI:
         # Add start game button
         app.addNamedButton('START GAME!','start',self.close_start,row,0,2)
         app.setButtonState('start','disabled')
-        app.setButtonSubmitFunction('start',self.close_start)
+        # app.setButtonSubmitFunction('start',self.close_start)
+        app.enableEnter(self.close_start)
 
         app.registerEvent(self.play_music)
         
@@ -109,7 +105,6 @@ class djackGUI:
     
     
     def update_entries(self):
-        # app.openSubWindow('New Game')
         for i in range(5):
             j = i+1
             entry = 'player_{}'.format(j)
@@ -124,12 +119,10 @@ class djackGUI:
             label = 'player_{}_txt'.format(k)
             app.showLabel(label)
             app.showEntry(entry)
- #        app.stopSubWindow()
-# -
+
     def check_during(self,entry):
         data = app.getEntry(entry)
         num = app.getScale('nump_scale')
-        # app.openSubWindow('New Game')
         for i in range(num):
             j = i + 1
             temp = 'player_{}'.format(j)
@@ -137,7 +130,6 @@ class djackGUI:
             if ((data == check) and temp != entry):
                 app.setEntryInvalid(entry)
                 app.setButtonState('start','disabled')
-                # app.soundError()
                 break
             else:
                 app.setEntryValid(entry)
@@ -148,35 +140,42 @@ class djackGUI:
         # Make the Players list from the entries
         self.players = []
         self.players_ref = {}
-        # app.openSubWindow('New Game')
-        self.num = app.getScale('nump_scale')
+        num = app.getScale('nump_scale')
 
-        for i in range(self.num):
+        for i in range(num):
             j = i+1
             entry = 'player_{}'.format(j)
             name = app.getEntry(entry)
             self.players.append(name)
             self.players_ref[name] = Player(name)
 
-        # app.stopSubWindow()
         beats.stop_all()
         self.started = True
         app.destroySubWindow('New Game')
         app.show()
-        self.table_layout(self.num)
-        
+        self.table_layout(num)
+
+    # MAIN FUNCTION
     def table_layout(self,num):
-        # MAIN FUNCTION
+        # Set up the look
         app.setTitle('djack')
         app.setSize('fullscreen')
+        app.setBg('firebrick3')
+
+        # Lay down some fresh beats
         self.music_wave = beats.WaveObject.from_wave_file('sounds/Arcade-Puzzler_v001.wav')
         row = app.getRow()
         for i in range(num):
-            app.addLabel('{}'.format(self.players[i]),row=row,column=i)
+            # app.setStretch('none')
+            player = self.players_ref.get(self.players[i])
+            label = '{0}\nScore: {1}'.format(self.players[i],player.score)
+            app.addLabel('{}'.format(self.players[i]),label,row=row,column=i)
+            app.setLabelSticky('{}'.format(self.players[i]),'s')
             im = Image.open('{}_hand.png'.format(self.players[i]))
             im.convert('RGBA')
             im = ImageTk.PhotoImage(im)
             r = row+1
+            app.setSticky('n')
             app.addImageData('{} Hand'.format(self.players[i]),im,fmt='PhotoImage',row=r,column=i)
         
 
