@@ -3,8 +3,10 @@ from appJar import gui
 from player_info import PlayerHand, Player
 import simpleaudio as beats
 import numpy as np
-
 app = gui('djack')
+
+# Music Credit: Eric Matyas, soundimage.org
+# Art Credit: Andrew Tidey, https://opengameart.org/content/cards-set
 
 class djackGUI:
     def __init__(self):
@@ -21,7 +23,6 @@ class djackGUI:
         self.music_wave = beats.WaveObject.from_wave_file('resources/sounds/Insert-Quarter.wav')
         self.music = self.music_wave.play()
         
-        # app.showSplash('djack','white','white','black',44)
         # Welcome image
         app.addLabel('logo','djack',0,0,2)
         app.getLabelWidget('logo').config(font='Modern\ Sans 62')
@@ -98,10 +99,6 @@ class djackGUI:
             self.music = self.music_wave.play()
         else:
             pass
-        # if not (self.started or self.music.is_playing()):
-        #     self.music = self.music_wave.play()
-        # else:
-        #     pass
     
     
     def update_entries(self):
@@ -199,7 +196,19 @@ class djackGUI:
             r += 1
             app.setSticky('n')
             app.addImageData('{} Hand'.format(self.players[i]),im,fmt='PhotoImage',row=r,column=i)
-        
+            r += 1
+            app.addNamedButton('Hit me!','{} hit'.format(self.players[i]),self.hit)
+    #         r += 1
+    #         app.addNamedButton('Hit!','hit {}'.format(self.players[i]),)
+
+    def hit(self,cmd):
+        name = cmd.replace(' hit','')
+        player = self.players_ref.get(name)
+        player.hit()
+        im = Image.open('{}_hand.png'.format(name))
+        im.convert('RGBA')
+        im = ImageTk.PhotoImage(im)
+        app.reloadImageData('{} Hand'.format(name),im,fmt='PhotoImage')
 
 if __name__=='__main__':
     dj = djackGUI()
