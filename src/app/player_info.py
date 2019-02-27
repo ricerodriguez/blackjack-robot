@@ -116,7 +116,7 @@ class PlayerHand:
         self.__card_size = card_size
         self.__deck_01()
 
-        self.hand_pic = Image.new('RGBA',(400,300),(205,38,38,255)) # 1980/5 x 1080/5
+        self.hand_pic = Image.new('RGBA',(600,300),(205,38,38,255)) # 1980/5 x 1080/5
         self.player_name = player
         self.hand = [card]
 
@@ -162,46 +162,54 @@ class PlayerHand:
         self.update_hand_pic()
 
     def update_hand_pic(self):
-        img_w, img_h = self.hand_pic.size
-        canvas = Image.new('RGBA',(img_w,img_h),(205,38,38,0))
+        canvas = Image.new('RGBA',(600,300),(205,38,38,0))
         card_w,card_h = self.pillows[0].size
-        card_canvas = Image.new('RGBA',(4*card_w,4*card_h),(205,38,38,0))
-        # mid_card = int(len(self.pillows)/2)
-        # mid_angle = 0
+        card_canvas = Image.new('RGBA',(10*card_w,6*card_h),(205,38,38,0))
+        angles = [0,90,45,30,15,0,-15]
+        upper_lcorners = [(406,83),(368,25),(326,24),(236,28),(182,79),(177,166)]
+        lower_rcorners = [(571,235),(518,194),(429,162),(389,194),(347,232),(317,269)]
+
         for i,img in enumerate(self.pillows):
             working = self.pillows[i]
             working = working.rotate(90,expand=True)
             working = self.crop_img(working)
-            # places = len(self.pillows)
-            ctr_can_x = int(2*card_w - (card_h/2))
-            ctr_can_y = int(2*card_h - (card_w/2))
+            ctr_can_x = int(5*card_w - (card_h/2))
+            ctr_can_y = int(3*card_h - (card_w/2))
             card_canvas.paste(working,(ctr_can_x, ctr_can_y),working)
 
-            # card_canvas.show()
-
-            btm_ctr = (ctr_can_x-20,2*card_h+20)
+            btm_ctr = (ctr_can_x-100,2*card_h+100)
             rotated = card_canvas.rotate(angle=30*(i+1),center=btm_ctr,expand=False)
-
-            # rotated.show()
-
-            x = int(canvas.size[0]/2)
-            y = int(canvas.size[1]/2)
-            
-            # rotatedBox = rotated.getbbox()
-            # rotated = rotated.crop(rotatedBox)
             rotated = self.crop_img(rotated)
-            rotated.show()
-            canvas.paste(rotated,(x,y),rotated)
-
-            # if (i == mid_card):
-            #     mid_angle = -30*(i+1)
-
+            x = int(canvas.size[0]/2 - rotated.size[0]/2)
+            y = int(canvas.size[1]/2 - rotated.size[1]/2)
+            
+            # rotated.show()
+            # placement = (upper_lcorners[i]+lower_rcorners[i])
             # canvas.show()
-        
-        canvasBox = canvas.getbbox()
+            canvas.paste(rotated,upper_lcorners[i],rotated)
+            # canvas.show()
+            # canvas.show()
+        def crop(im):
+            im.load()
+            imSize = im.size
+            imBox = im.getbbox()
+            imComps = im.split()
+
+            rgbIm = Image.new('RGB',imSize,(0,0,0))
+            rgbIm.paste(im,mask=imComps[3])
+            cropbox = rgbIm.getbbox()
+
+            if (imBox != cropbox):
+                crop=im.crop(cropbox)
+                return crop
+            
+        # canvasBox = canvas.getbbox()
         # canvas = canvas.crop(canvasBox)
-        self.hand_pic = canvas.crop(canvasBox)
-        # self.hand_pic = canvas.rotate(mid_angle)
+        canvas = crop(canvas)
+        # self.hand_pic = canvas.crop(canvasBox)
+        angle_offset = angles[len(self.pillows)]
+        self.hand_pic = canvas.rotate(angle_offset,expand=True)
+        # canvas.show()
         self.hand_pic.save('{}_hand.png'.format(self.player_name))
 
     def crop_img(self,img):

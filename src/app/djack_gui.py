@@ -190,16 +190,19 @@ class djackGUI:
             label = '{0}\nScore: {1}'.format(self.players[i],player.score)
             app.addLabel('{}'.format(self.players[i]),label,row=r,column=i)
             app.setLabelSticky('{}'.format(self.players[i]),'s')
-            im = Image.open('{}_hand.png'.format(self.players[i]))
+            # im = Image.open('{}_hand.png'.format(self.players[i]))
+            im = Image.open('resources/deck_01/example_hand.png')
             im.convert('RGBA')
             im = ImageTk.PhotoImage(im)
             r += 1
             app.setSticky('n')
             app.addImageData('{} Hand'.format(self.players[i]),im,fmt='PhotoImage',row=r,column=i)
+            im = Image.open('{}_hand.png'.format(self.players[i]))
+            im.convert('RGBA')
+            im = ImageTk.PhotoImage(im)
+            app.reloadImageData('{} Hand'.format(self.players[i]),im,fmt='PhotoImage')
             r += 1
             app.addNamedButton('Hit me!','{} hit'.format(self.players[i]),self.hit)
-    #         r += 1
-    #         app.addNamedButton('Hit!','hit {}'.format(self.players[i]),)
 
     def hit(self,cmd):
         name = cmd.replace(' hit','')
