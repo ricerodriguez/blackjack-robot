@@ -1,10 +1,14 @@
 import cv2 as cv
 import sys, numpy, pytesseract
 from PIL import Image
+from picamera import PiCamera
+
+cam = PiCamera()
 
 class ImageProcessor:
     def __init__(self, img1, img2):
         # self.path = pathname
+        cam.capture('images/card.jpg')
         self.img = cv.imread(cv.samples.findFile(img1))
         self.img2 = cv.imread(cv.samples.findFile(img2))
         # Exit if can't find source file

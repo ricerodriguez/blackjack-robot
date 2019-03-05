@@ -183,12 +183,8 @@ class PlayerHand:
             x = int(canvas.size[0]/2 - rotated.size[0]/2)
             y = int(canvas.size[1]/2 - rotated.size[1]/2)
             
-            # rotated.show()
-            # placement = (upper_lcorners[i]+lower_rcorners[i])
-            # canvas.show()
             canvas.paste(rotated,upper_lcorners[i],rotated)
-            # canvas.show()
-            # canvas.show()
+
         def crop(im):
             im.load()
             imSize = im.size
@@ -203,13 +199,9 @@ class PlayerHand:
                 crop=im.crop(cropbox)
                 return crop
             
-        # canvasBox = canvas.getbbox()
-        # canvas = canvas.crop(canvasBox)
         canvas = crop(canvas)
-        # self.hand_pic = canvas.crop(canvasBox)
         angle_offset = angles[len(self.pillows)]
         self.hand_pic = canvas.rotate(angle_offset,expand=True)
-        # canvas.show()
         self.hand_pic.save('{}_hand.png'.format(self.player_name))
 
     def crop_img(self,img):

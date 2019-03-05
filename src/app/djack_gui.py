@@ -202,7 +202,7 @@ class djackGUI:
             im = ImageTk.PhotoImage(im)
             app.reloadImageData('{} Hand'.format(self.players[i]),im,fmt='PhotoImage')
             r += 1
-            app.addNamedButton('Hit me!','{} hit'.format(self.players[i]),self.hit)
+            app.addNamedButton('Hit me!','{} hit'.format(self.players[i]),self.hit,row=r,column=i)
 
     def hit(self,cmd):
         name = cmd.replace(' hit','')
@@ -212,6 +212,9 @@ class djackGUI:
         im.convert('RGBA')
         im = ImageTk.PhotoImage(im)
         app.reloadImageData('{} Hand'.format(name),im,fmt='PhotoImage')
+        player = self.players_ref.get(name)
+        label = '{0}\nScore: {1}'.format(name,player.score)
+        app.setLabel('{}'.format(name),label)
 
 if __name__=='__main__':
     dj = djackGUI()
