@@ -1,115 +1,16 @@
 import numpy as np
+import sys, os
 import math
 import random
+
+curr_path = os.path.dirname(__file__)
+sys.path.append(curr_path.replace('app','card_reader'))
+
+import CARD_DEFS
 from PIL import Image
-# from resource_loader import ResourceLoader
 
-GENERAL_DECK = [
-   "Clubs 2",
-   "Clubs 3",
-   "Clubs 4",
-   "Clubs 5",
-   "Clubs 6",
-   "Clubs 7",
-   "Clubs 8",
-   "Clubs 9",
-   "Clubs 10",
-    "Clubs Jack",
-    "Clubs Queen",
-    "Clubs King",
-    "Diamonds 2",
-    "Diamonds 3",
-    "Diamonds 4",
-    "Diamonds 5",
-    "Diamonds 6",
-    "Diamonds 7",
-    "Diamonds 8",
-    "Diamonds 9",
-    "Diamonds 10",
-    "Diamonds Jack",
-    "Diamonds Queen",
-    "Diamonds King",
-    "Hearts 2",
-    "Hearts 3",
-    "Hearts 4",
-    "Hearts 5",
-    "Hearts 6",
-    "Hearts 7",
-    "Hearts 8",
-    "Hearts 9",
-    "Hearts 10",
-    "Hearts Jack",
-    "Hearts Queen",
-    "Hearts King",
-    "Spades 2",
-    "Spades 3",
-    "Spades 4",
-    "Spades 5",
-    "Spades 6",
-    "Spades 7",
-    "Spades 8",
-    "Spades 9",
-    "Spades 10",
-    "Spades Jack",
-    "Spades Queen",
-    "Spades King",
-    "Clubs Ace",
-    "Spades Ace",
-    "Hearts Ace",
-    "Diamonds Ace"
-]
-
-CARD_VALUES = [
-   2,
-   3,
-   4,
-   5,
-   6,
-   7,
-   8,
-   9,
-   10,
-    10,
-    10,
-    10,
-    2,
-    3,
-    4,
-    5,
-    6,
-    7,
-    8,
-    9,
-    10,
-    10,
-    10,
-    10,
-    2,
-    3,
-    4,
-    5,
-    6,
-    7,
-    8,
-    9,
-    10,
-    10,
-    10,
-    10,
-    2,
-    3,
-    4,
-    5,
-    6,
-    7,
-    8,
-    9,
-    10,
-    10,
-    10,
-    10
-]
-
+GENERAL_DECK = CARD_DEFS.GENERAL_DECK
+CARD_VALUES = CARD_DEFS.CARD_VALUES
 
 class PlayerHand:
     def __init__(self, card, player='Jack',card_size='medium'):
@@ -280,6 +181,8 @@ class PlayerHand:
         return deck
         
 class Player:
+    discard_pile = []
+    
     def __init__(self, name='Jack',payout=0,bet=0,deck=1):
         self.name = name
         self.payout = payout
@@ -292,7 +195,7 @@ class Player:
         # Deal initial cards
         draw = random.randint(0,51)
         self.update_score(draw)
-        self.discard_pile = [draw]
+        self.discard_pile.append(draw)
         card = GENERAL_DECK[draw]
 
         self.hand = PlayerHand(card,name)
