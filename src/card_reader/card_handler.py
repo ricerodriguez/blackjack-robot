@@ -4,6 +4,7 @@
 import threading
 import os
 import time
+import logging
 
 # Local package definition for card macros
 import CARD_DEFS
@@ -16,6 +17,8 @@ from picamera import PiCamera
 cam = PiCamera()
 GEN_DECK = CARD_DEFS.GENERAL_DECK
 
+#logging.basicConfig(filename=os.path.join(str(os.path.dirname(__file__)), 'log', 'calibrator.log'), level=logging.INFO)
+logging.basicConfig(level=logging.INFO)
 class Calibrator(threading.Thread):
     def __init__(self, trigger=None, path=None, deck=None):
         self.path = path
@@ -72,10 +75,16 @@ class Calibrator(threading.Thread):
     def run(self):
         # For each kind of card possible...
         for card in GEN_DECK:
+            # Wait until the next card is in position to take a picture
+            logging.info('CL: Waiting until ready for ' + card)
+            self.ready.wait()
+            logging.info('CL: Ready to start the process for ' + card)
+            print('Taking a picture of ' + card)
+            logging.info('CL: Starting the process for ' + card)
             # Clear out the flag for the snapped event
             self.snapped.clear()
-            # Wait until the next card is in position to take a picture
-            self.ready.wait()
+
+ 
             # If the card is ready
             if self.ready.is_set():
                 # Clear the flag
@@ -92,31 +101,50 @@ class Calibrator(threading.Thread):
                 self._card_map[card] = filename
                 # Set the flag that the picture has been taken
                 self.snapped.set()
+                logging.info('CL: Set snapped event!')
                 
-                
+         
+class Tester(threading.Thread):
+    def __init__(self, cls, trigger):
+        threading.Thread.__init__(self)
+        self.kaleb = cls
+        self.snapped = trigger
+        
+    def run(self):
+        while True:
+            logging.info('TESTER: Waiting for Pi to finish snapping!')
+            self.snapped.wait()
+            if self.snapped.is_set():
+                logging.info('TESTER: It\'s done! Clearing out ready flag...')            
+                self.kaleb.ready.clear()
+                logging.info('TESTER: Cleared out the ready flag.')
+                time.sleep(1)
+                self.kaleb.ready.set()
+                logging.info('TESTER: Set ready!')
+            logging.info('TESTER: EXITED IF')
+#        else:
+#            pass
+        
 class CardReader:
     def __init__(self, path=None, deck=None):
-        self.snapped = threading.Event()
-        kaleb = Calibrator(self.snapped, path, deck)
+        snapped = threading.Event()
+        kaleb = Calibrator(snapped, path, deck)
         kaleb.start()
-
-        thr = threading.Thread(target=self.next_card)
-        thr.start()
         
-        print('Calibrating cards, please wait...')
+        thr = Tester(kaleb, snapped)
+        thr.start()
 
-        kaleb.join()
-        thr.join()
+#        thr = threading.Thread(target=self.next_card)
+#        thr.start()
+        
+#        print('Calibrating cards, please wait...')
+
+#        kaleb.join()
+#        thr.join()
 
     # Placeholder function to simulate the signal the MSP430 will send
     # to the Pi after it has finished moving the servo
-    def next_card(self):
-        self.snapped.wait()
-        if self.snapped.is_set():
-            time.sleep(3)
-            self.ready.set()
-        else:
-            pass
+#    def next_card(self):
         
 if __name__=='__main__':
     cr = CardReader()
