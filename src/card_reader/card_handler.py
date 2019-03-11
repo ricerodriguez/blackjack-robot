@@ -83,6 +83,7 @@ class Calibrator(threading.Thread):
                 # Make sure there are no spaces in the file name to
                 # avoid confusion
                 card_name = card.replace(' ', '_')
+                card_name = card_name + '.png'
                 # Join the path created earlier with the card_name
                 filename = os.path.join(self.path, card_name)
                 # Snap the picture
@@ -103,6 +104,9 @@ class CardReader:
         thr.start()
         
         print('Calibrating cards, please wait...')
+
+        kaleb.join()
+        thr.join()
 
     # Placeholder function to simulate the signal the MSP430 will send
     # to the Pi after it has finished moving the servo
