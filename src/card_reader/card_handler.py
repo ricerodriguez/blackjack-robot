@@ -1,10 +1,11 @@
-# import cv2 as cv
-# import sys
-# import numpy
+import cv2 as cv
+import numpy
 import threading
 import os
 import time
 import logging
+# import sys
+
 
 # Local package definition for card macros
 import CARD_DEFS
@@ -42,14 +43,6 @@ class Calibrator(threading.Thread):
         self.ready = threading.Event()
         self.ready.set()
         
-        # t1 = threading.Thread(target=calibrate_cards)
-        # t1.start()
-
-        # # Thread is used to simulate the MSP430 sending a signal that
-        # # it has moved the servo for the next card.
-        # t2 = threading.Thread(target=next_card)
-        # t2.start()
-
     # Initialize the card map, which maps the card name to the
     # pathname of the image taken of the card
     def _init_path(self, path=None, deck=None):
@@ -68,7 +61,7 @@ class Calibrator(threading.Thread):
         # folder for the current deck
         elif path is None and deck is not None:
             path = os.path.dirname(__file__)
-            self.path = os.path.join(path, 'data', 'calib_cards', deck)
+            self.path = os.path.join(path, 'data', 'calib_cards', 'deck_0{}'.format(deck))
             if not os.path.exists(self.path):
                 os.makedirs(self.path)
 
@@ -84,28 +77,77 @@ class Calibrator(threading.Thread):
             # Clear out the flag for the snapped event
             self.snapped.clear()
             
+            # Wait until the ready flag is set
             while not self.ready.is_set():
                 self.ready.wait()
 
-            # If the card is ready
-            if self.ready.is_set():
-#            else:
-                # Clear the flag
-                self.ready.clear()
-                # Make sure there are no spaces in the file name to
-                # avoid confusion
-                card_name = card.replace(' ', '_')
-                card_name = card_name + '.png'
-                # Join the path created earlier with the card_name
-                filename = os.path.join(self.path, card_name)
-                # Snap the picture
-                cam.capture(filename)
-                # Add the file name to the map to keep track
-                self._card_map[card] = filename
-                # Set the flag that the picture has been taken
-                self.snapped.set()
-                logging.info('CL: Set snapped event!')
+            # Clear the flag
+            self.ready.clear()
+            
+            # Make sure there are no spaces in the file name to
+            # avoid confusion
+            card_name = card.replace(' ', '_')
+
+            # Add the file extension so data type can be inferred
+            card_name = card_name + '.png'
+            
+            # Join the path created earlier with the card_name
+            filename = os.path.join(self.path, card_name)
+            
+            # Snap the picture
+            cam.capture(filename)
+            
+            # Add the file name to the map to keep track
+            self._card_map[card] = filename
+            # Set the flag that the picture has been taken
+            self.snapped.set()
+            logging.info('CL: Set snapped event!')
+
+        # Exited the for-loop, so all cards have been snapped.
+        self.img_prep()
+
+        
+    def img_prep(self):
+        # For each card in the folder
+        card_imgs = os.listdir(self.path)
+        # Credit to OpenCV's tutorial: 'Creating Bounding boxes and
+        # circles for contours'
+
+        for img in card_imgs:
+            # Read in the card
+            card = cv.imread(img)
+            # Use Canny algorithm to find edges
+            can_out = cv.Canny(card, 100, 200)
+            # Convert to gray and blur it
+            card_g = cv.cvtColor(card, cv.COLOR_BGR2GRAY)
+            card_g = cv.blur(card, (3,3))
+            # Find contours, save them to vector
+            contours, _ = cv.findContours(can_out, cv.RETR_TREE,
+                                          cv.CHAIN_APPROX_SIMPLE)
+            # Approximate contours to polygons + get bounding
+            # rects/circles
+            cont_poly = [None]*len(contours)
+            bound_box = [None]*len(contours)
+
+            # For each of the contours found, approximate a polygon
+            # from the contour, then draw a bounding box for that
+            # polygon            
+            for i,c in enumerate(contours):
+                cont_poly[i] = cv.approxPolyDP(c,3,True)
+                bound_box[i] = cv.boundingRect(cont_poly[i])
+
+            # Find the biggest bounding box
+            areas = []
+            for box in bound_box:
+                areas.append(box[2]*box[3])
                 
+            big_box = bound_box.index(max(bound_box))
+
+            x, y, w, h = big_box
+            roi = card[y:y+h, x:x+w]
+            cv.imwrite(img, roi)
+            
+        
          
 class Tester(threading.Thread):
     def __init__(self, cls, trigger):
@@ -125,9 +167,7 @@ class Tester(threading.Thread):
                 self.kaleb.ready.set()
                 logging.info('TESTER: Set ready!')
             logging.info('TESTER: EXITED IF')
-#        else:
-#            pass
-        
+
 class CardReader:
     def __init__(self, path=None, deck=None):
         snapped = threading.Event()
@@ -136,32 +176,6 @@ class CardReader:
         
         thr = Tester(kaleb, snapped)
         thr.start()
-
-#        thr = threading.Thread(target=self.next_card)
-#        thr.start()
-        
-#        print('Calibrating cards, please wait...')
-
-#        kaleb.join()
-#        thr.join()
-
-    # Placeholder function to simulate the signal the MSP430 will send
-    # to the Pi after it has finished moving the servo
-#    def next_card(self):
         
 if __name__=='__main__':
     cr = CardReader()
-        
-    #     self._calibrated_cards = []
-    #     self._calibrated_decks = []
-
-    # @property
-    # def calibrated_cards(self):
-    #     return self._calibrated_cards
-
-    # @calibrated_cards.setter
-    # def calibrated_cards(self, card):
-    #     if not (len(self._calibrated_cards) == 0):
-    #         self._calibrated_cards.append(card)
-    #     else:
-    #         self._calibrated_cards = [card]
