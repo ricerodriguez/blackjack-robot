@@ -83,10 +83,13 @@ class Calibrator(threading.Thread):
             logging.info('CL: Starting the process for ' + card)
             # Clear out the flag for the snapped event
             self.snapped.clear()
+            
+            while not self.ready.is_set():
+                self.ready.wait()
 
- 
             # If the card is ready
             if self.ready.is_set():
+#            else:
                 # Clear the flag
                 self.ready.clear()
                 # Make sure there are no spaces in the file name to
