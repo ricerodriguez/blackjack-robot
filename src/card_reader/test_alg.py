@@ -12,12 +12,14 @@ def test_crop():
     card = cv.imread('test.jpg')
     # Use Canny algorithm to find edges
     can_out = cv.Canny(card, 100, 200)
+    
     # Convert to gray and blur it
     card_g = cv.cvtColor(card, cv.COLOR_BGR2GRAY)
-    card_g = cv.blur(card, (3,3))
+    #card_g = cv.blur(card, (3,3))
+    _, thresh = cv.threshold(card_g, 127, 255, 0)
+    #cv.imshow('blurred', card_g)
     # Find contours, save them to vector
-    contours, _ = cv.findContours(can_out, cv.RETR_TREE,
-                                  cv.CHAIN_APPROX_SIMPLE)
+    img, contours, hierarchy = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
     # Approximate contours to polygons + get bounding
     # rects/circles
     cont_poly = [None]*len(contours)
@@ -35,8 +37,14 @@ def test_crop():
     for box in bound_box:
         areas.append(box[2]*box[3])
 
-    big_box = bound_box.index(max(bound_box))
-
+    big_box_i = areas.index(max(areas))
+    big_box = bound_box[big_box_i]
+    logging.warning('big_box is ' + str(big_box))
+    logging.warning('bound_box is ' + str(bound_box))
+    logging.warning('areas is ' + str(areas))
     x, y, w, h = big_box
     roi = card[y:y+h, x:x+w]
-    cv.imwrite(img, roi)
+    cv.imwrite('test1.jpg', roi)
+    
+if __name__=='__main__':
+    test_crop()
