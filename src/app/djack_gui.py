@@ -203,6 +203,7 @@ class djackGUI:
             app.reloadImageData('{} Hand'.format(self.players[i]),im,fmt='PhotoImage')
             r += 1
             app.addNamedButton('Hit me!','{} hit'.format(self.players[i]),self.hit,row=r,column=i)
+            
 
     def hit(self,cmd):
         name = cmd.replace(' hit','')
@@ -215,6 +216,10 @@ class djackGUI:
         player = self.players_ref.get(name)
         label = '{0}\nScore: {1}'.format(name,player.score)
         app.setLabel('{}'.format(name),label)
+
+        if player.busted():
+            app.setLabel('{}'.format(name), '{}\nBUSTED'.format(name))
+            app.disableButton('{} hit'.format(name))
 
 if __name__=='__main__':
     dj = djackGUI()

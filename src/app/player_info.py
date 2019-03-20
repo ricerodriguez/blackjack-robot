@@ -66,25 +66,41 @@ class PlayerHand:
         canvas = Image.new('RGBA',(600,300),(205,38,38,0))
         card_w,card_h = self.pillows[0].size
         card_canvas = Image.new('RGBA',(10*card_w,6*card_h),(205,38,38,0))
+
+        # card_canvas.save('cardcanvas.png')
+
         angles = [0,90,45,30,15,0,-15]
         upper_lcorners = [(406,83),(368,25),(326,24),(236,28),(182,79),(177,166)]
         lower_rcorners = [(571,235),(518,194),(429,162),(389,194),(347,232),(317,269)]
 
         for i,img in enumerate(self.pillows):
             working = self.pillows[i]
+            
+            # working.save('00working{}.png'.format(i))
+            
             working = working.rotate(90,expand=True)
             working = self.crop_img(working)
+
+            # working.save('01working{}.png'.format(i))
+            
             ctr_can_x = int(5*card_w - (card_h/2))
             ctr_can_y = int(3*card_h - (card_w/2))
             card_canvas.paste(working,(ctr_can_x, ctr_can_y),working)
 
+            # card_canvas.save('02cardcanvas{}.png'.format(i))
+            
             btm_ctr = (ctr_can_x-100,2*card_h+100)
             rotated = card_canvas.rotate(angle=30*(i+1),center=btm_ctr,expand=False)
             rotated = self.crop_img(rotated)
+
+            # rotated.save('03rotated{}.png'.format(i))
+            
             x = int(canvas.size[0]/2 - rotated.size[0]/2)
             y = int(canvas.size[1]/2 - rotated.size[1]/2)
             
             canvas.paste(rotated,upper_lcorners[i],rotated)
+
+            # canvas.save('04canvas{}.png'.format(i))
 
         def crop(im):
             im.load()
@@ -213,7 +229,7 @@ class Player:
         return True
 
     def busted(self):
-        if (score > 21):
+        if (self.score > 21):
             return True
         else:
             return False
