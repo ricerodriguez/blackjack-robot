@@ -17,7 +17,7 @@ def test_crop():
     card_g = cv.cvtColor(card, cv.COLOR_BGR2GRAY)
 
     # Gaussian blur
-    blue = cv.GaussianBlur(card_g,(7,7),2)
+    blur = cv.GaussianBlur(card_g,(7,7),2)
 
     # Adaptive thresholding
     thresh = cv.adaptiveThreshold(blur,255,1,1,11,1)
