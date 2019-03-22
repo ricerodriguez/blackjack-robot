@@ -15,8 +15,14 @@ def test_crop():
     
     # Convert to gray and blur it
     card_g = cv.cvtColor(card, cv.COLOR_BGR2GRAY)
+
+    # Gaussian blur
+    blue = cv.GaussianBlur(card_g,(7,7),2)
+
+    # Adaptive thresholding
+    thresh = cv.adaptiveThreshold(blur,255,1,1,11,1)
     #card_g = cv.blur(card, (3,3))
-    _, thresh = cv.threshold(card_g, 127, 255, 0)
+    # _, thresh = cv.threshold(card_g, 127, 255, 0)
     #cv.imshow('blurred', card_g)
     # Find contours, save them to vector
     img, contours, hierarchy = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
