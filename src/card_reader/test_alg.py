@@ -59,7 +59,8 @@ def test_crop():
         else:
             pass
 
-    im_card = cv.drawContours(card,cnt_card,0,(0,255,0),3)
+    im_card = cv.drawContours(thresh,cnt_card,0,(0,255,0),3)
+    cv.imshow(im_card)
     cv.imwrite('contours.jpg',im_card)
 
     
