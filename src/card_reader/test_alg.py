@@ -50,19 +50,22 @@ def test_crop():
         hier_sort.append(hierarchy[0][i])
 
     for i,cnt in enumerate(cont_sort):
+        size = cv.contourArea(cnt)
         peri = cv.arcLength(cnt,True)
         poly = cv.approxPolyDP(cnt,0.01*peri,True)
 
-        if ((hier_sort[i][3] == -1) and (len(poly) == 4)):
+        if ((size > 400) and (hier_sort[i][3] == -1) and (len(poly) == 4)):
             cnt_card = cnt
+            print('got it')
             break
         else:
             pass
 
-    im_card = cv.drawContours(thresh,cnt_card,0,(0,255,0),3)
-    cv.imshow('card',im_card)
-    cv.waitKey()
-    cv.imwrite('contours.jpg',im_card)
+    im_card = card.copy()
+    cv.drawContours(im_card,cnt_card,-1,(255,255,0),3)
+    cv.imshow('card after',im_card)
+    cv.waitKey(0)
+    cv.imwrite('contours.jpg',thresh)
 
     
 
