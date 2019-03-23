@@ -25,7 +25,7 @@ def test_crop():
     
     # Find contours, save them to vector
     _, contours, hierarchy = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-    cont_drawn = cv.drawContours(card, contours, -1 (0,255,0),3)
+#    cont_drawn = cv.drawContours(card, contours, -1 (0,255,0),3)
     # Initialize lists for sorted contours and hierarchies
     cont_sort = []
     cont_inds = []
@@ -37,7 +37,9 @@ def test_crop():
         area = cv.contourArea(cnt)
         cont_areas.append(area)
     # New list is sorted version
-    cont_areas_sort = cont_areas.sort()
+    cont_areas_sort = cont_areas.copy()
+    cont_areas_sort.sort()
+#    print(cont_areas)
     # Find the index of each sorted one from the old one
     for cnt in cont_areas_sort:
         i_areas = cont_areas.index(cnt)
