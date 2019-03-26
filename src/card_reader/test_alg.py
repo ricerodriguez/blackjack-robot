@@ -31,11 +31,13 @@ def test_crop():
     cont_inds = []
     cont_areas = []
     hier_sort = []
+    polys = []
     cnt_card = None
     # Fill empty list with all the areas
     for cnt in contours:
         area = cv.contourArea(cnt)
         cont_areas.append(area)
+        polys.append(cv.approxPolyDP(cnt,3,True))
     # New list is sorted version
     cont_areas_sort = cont_areas.copy()
     cont_areas_sort.sort()
@@ -54,7 +56,7 @@ def test_crop():
         peri = cv.arcLength(cnt,True)
         poly = cv.approxPolyDP(cnt,0.01*peri,True)
 
-        if ((size > 400) and (hier_sort[i][3] == -1) and (len(poly) == 4)):
+        if ((size > 600) and (hier_sort[i][3] == -1) and (hier_sort[i][2] != -1) and (len(poly) == 4)):
             cnt_card = cnt
             print('got it')
             break
@@ -66,7 +68,7 @@ def test_crop():
         
     # im_card = np.zeros_like(card)
     im_card = card.copy()
-    cv.drawContours(im_card,cnt_card,-1,(255,255,0),3)
+    cv.drawContours(im_card,polys,-1,(255,255,0),3)
     cv.imshow('card after',im_card)
     cv.waitKey(0)
     
