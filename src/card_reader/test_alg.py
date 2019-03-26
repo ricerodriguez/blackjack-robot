@@ -66,7 +66,7 @@ def test_crop():
         
     im_card = np.zeros_like(card)
     # im_card = card.copy()
-    cv.drawContours(im_card,contours,-1,(255,255,0),3)
+    cv.drawContours(im_card,cnt_card,-1,(255,255,0),3)
     cv.imshow('card after',im_card)
     cv.waitKey(0)
     
