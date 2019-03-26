@@ -64,7 +64,7 @@ def test_crop():
     x,y,w,h = cv.boundingRect(cnt_card)
     roi = card[y:y+h,x:x+w]
         
-   im_card = np.zeros_like(card)
+    im_card = np.zeros_like(card)
     # im_card = card.copy()
     cv.drawContours(im_card,contours,-1,(255,255,0),3)
     cv.imshow('card after',im_card)
