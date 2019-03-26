@@ -55,11 +55,14 @@ def test_crop():
         size = cv.contourArea(cnt)
         peri = cv.arcLength(cnt,True)
         poly = cv.approxPolyDP(cnt,0.01*peri,True)
-        boxes = []
-        if (len(poly) == 4):
-            boxes.append(cnt)
+        # boxes = []
+        # if (len(poly) == 4):
+        #     boxes.append(cnt)
 
-        if ((size > 600) and (hier_sort[i][3] == -1) and (hier_sort[i][2] != -1) and (len(poly) == 4)):
+        if (size < 500):
+            continue
+
+        if ((size > 800) and (hier_sort[i][3] == -1) and (hier_sort[i][2] != -1) and (len(poly) == 4)):
             cnt_card = cnt
             print('got it')
             break
@@ -71,7 +74,7 @@ def test_crop():
         
     # im_card = np.zeros_like(card)
     im_card = card.copy()
-    cv.drawContours(im_card,boxes,-1,(255,255,0),3)
+    cv.drawContours(im_card,cnt_card,-1,(255,255,0),3)
     cv.imshow('card after',im_card)
     cv.waitKey(0)
     
