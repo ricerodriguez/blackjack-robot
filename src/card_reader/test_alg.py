@@ -32,7 +32,7 @@ def test_crop():
     cont_areas = []
     hier_sort = []
     # polys = []
-    cnt_card = None
+    cnt_card = []
     # Fill empty list with all the areas
     for cnt in contours:
         area = cv.contourArea(cnt)
@@ -58,16 +58,17 @@ def test_crop():
         # boxes = []
         # if (len(poly) == 4):
         #     boxes.append(cnt)
+        if ((len(poly) == 4) and (size > 400)):
+            cnt_card.append(cnt)
+        # if (size < 500):
+        #     continue
 
-        if (size < 500):
-            continue
-
-        if ((size > 800) and (hier_sort[i][3] == -1) and (hier_sort[i][2] != -1) and (len(poly) == 4)):
-            cnt_card = cnt
-            print('got it')
-            break
-        else:
-            pass
+        # if ((size > 800) and (hier_sort[i][3] == -1) and (hier_sort[i][2] != -1) and (len(poly) == 4)):
+        #     cnt_card = cnt
+        #     print('got it')
+        #     break
+        # else:
+        #     pass
 
     x,y,w,h = cv.boundingRect(cnt_card)
     roi = card[y:y+h,x:x+w]
