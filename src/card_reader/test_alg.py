@@ -22,9 +22,11 @@ def test_crop():
     card = cv.imread('test.jpg')
     # Prep the image for the rest of everything else
     gray, blur, thresh = prep(card)
-    
+    kernel = np.ones((5,5),np.uint8)
+    dil = cv.dilate(gray, kernel, iterations = 1)
+    ero = cv.erode(dil, kernel, iterations = 1)
     # Find contours, save them to vector
-    _, contours, hierarchy = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+    _, contours, hierarchy = cv.findContours(ero, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 #    cont_drawn = cv.drawContours(card, contours, -1 (0,255,0),3)
     # Initialize lists for sorted contours and hierarchies
     cont_sort = []
@@ -63,7 +65,7 @@ def test_crop():
         # if (size < 500):
         #     continue
 
-        if ((size > 800) and (hier_sort[i][3] == -1) and (hier_sort[i][2] != -1) and (len(poly) == 4)):
+        if ((size > 400) and (hier_sort[i][3] == -1) and (len(poly) == 4)):
             cnt_card = cnt
             print('got it')
             break
@@ -73,9 +75,9 @@ def test_crop():
     x,y,w,h = cv.boundingRect(cnt_card)
     roi = card[y:y+h,x:x+w]
         
-    # im_card = np.zeros_like(card)
-    im_card = card.copy()
-    cv.drawContours(im_card,cnt_card,-1,(255,255,0),3)
+    im_card = np.zeros_like(card)
+    #im_card = card.copy()
+    cv.drawContours(im_card,contours,-1,(255,255,0),3)
     cv.imshow('card after',im_card)
     cv.waitKey(0)
     
