@@ -80,10 +80,36 @@ cv.drawContours(crdcnts2, [box], -1, (255,255,0),3)
 cv.imshow('min area rect',crdcnts2)
 cv.waitKey(0)
 
-angle = rect[2]
-print(angle)
-rows,cols = im.shape[0],im.shape[1]
-M = cv.getRotationMatrix2D((cols/2,rows/2),angle,1)
-im_rot = cv.warpAffine(im,M,(cols,rows))
-cv.imshow('rotated',im_rot)
+tmp_rect = np.zeros((4,2), dtype = "float32")
+pts = np.float32(box)
+sum_pts = np.sum(pts,axis=2)
+diff = np.diff(pts, axis = -1)
+
+tmp_rect[0] = pts[np.argmin(sum_pts)]
+tmp_rect[1] = pts[np.argmin(diff)]
+tmp_rect[2] = pts[np.argmax(sum_pts)]
+tmp_rect[3] = pts[np.argmax(diff)]
+
+maxWidth = 200
+maxHeight = 300
+
+dst = np.array([[0,0],[maxWidth-1,0],[maxWidth-1,maxHeight-1],[0, maxHeight-1]], np.float32)
+M = cv2.getPerspectiveTransform(temp_rect,dst)
+warp = cv2.warpPerspective(image, M, (maxWidth, maxHeight))
+warp = cv2.cvtColor(warp,cv2.COLOR_BGR2GRAY)
+cv.imshow('warped',warp)
 cv.waitKey(0)
+
+# tl = pts[np.argmin(sum_pts)]
+# br = pts[np.argmax(sum_pts)]
+
+# tr = pts[np.argmin(diff)]
+# bl = pts[np.argmax(diff)]
+
+# angle = rect[2]
+# print(angle)
+# rows,cols = im.shape[0],im.shape[1]
+# M = cv.getRotationMatrix2D((cols/2,rows/2),angle,1)
+# im_rot = cv.warpAffine(im,M,(cols,rows))
+# cv.imshow('rotated',im_rot)
+# cv.waitKey(0)
