@@ -48,13 +48,13 @@ def order_points(pts):
     (br,tr) = right[np.argsort(d)[::-1],:]
     return np.array([tl,tr,br,bl],np.float32)
 
-# def canny_sort(dil, im):
-#     edges = cv.Canny(dil, 0, 255)
-#     mask = edges != 0
-#     dst = im * (mask[:,:,None].astype(im.dtype))
-#     _, contours, _ = cv.findContours(edges,cv.RETR_TREE,cv.CHAIN_APPROX_SIMPLE)
-#     cont_sort = sorted(contours,key=cv.contourArea,reverse=True)[:1]
-#     return cont_sort
+def canny_sort(dil, im):
+    edges = cv.Canny(dil, 0, 255)
+    mask = edges != 0
+    dst = im * (mask[:,:,None].astype(im.dtype))
+    _, contours, _ = cv.findContours(edges,cv.RETR_TREE,cv.CHAIN_APPROX_SIMPLE)
+    cont_sort = sorted(contours,key=cv.contourArea,reverse=True)[:1]
+    return cont_sort
 
 def find_card():
     # Take a picture
@@ -63,11 +63,13 @@ def find_card():
     im = cv.imread('test.jpg')
     im_alt = im.copy()
     # Prep the image for the rest of everything else
-    gray, blur, thresh, ero, dil = prep(im)
-    # _, _, _, _, dil_rank = prep(im)
-    # _, _, _, _, dil_suit = prep(im,True)
-    # suit = canny_sort(dil_suit, im)
-    # rank = canny_sort(dil_rank, im)
+    # gray, blur, thresh, ero, dil = prep(im)
+    _, _, _, _, dil_rank = prep(im)
+    _, _, _, _, dil_suit = prep(im_alt,True)
+    rank = canny_sort(dil_rank, im)
+    suit = canny_sort(dil_suit, im_alt)
+    print('rank size; ',rank[-1].size)
+    print('suit size: ',suit[-1].size)
     # Find contours, save them to vector
     # _, contours, hiers = cv.findContours(dil, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
     # # Sort contours (Credit: https://github.com/arnabdotorg/Playing-Card-Recognition/blob/master/card_img.py)
@@ -76,13 +78,13 @@ def find_card():
     # card = cont_sort[-1]
     # peri = cv.arcLength(card, True)
     # approx = cv.approxPolyDP(card,0.02*peri,True)
-    edges = cv.Canny(dil, 0, 255)
-    mask = edges != 0
-    dst = im * (mask[:,:,None].astype(im.dtype))
-    # print(str(dst.shape))
-    _, cont_rank, _ = cv.findContours(edges,cv.RETR_TREE,cv.CHAIN_APPROX_SIMPLE)
-    cont_sort = sorted(cont_rank,key=cv.contourArea,reverse=True)[:1]
-    # _, cont_suit, _ = 
+    # edges = cv.Canny(dil, 0, 255)
+    # mask = edges != 0
+    # dst = im * (mask[:,:,None].astype(im.dtype))
+    # # print(str(dst.shape))
+    # _, cont_rank, _ = cv.findContours(edges,cv.RETR_TREE,cv.CHAIN_APPROX_SIMPLE)
+    # cont_sort = sorted(cont_rank,key=cv.contourArea,reverse=True)[:1]
+    # # _, cont_suit, _ = 
     
     # drawn_can_conts = np.zeros_like(im)
     # drawn_conts = np.zeros_like(im)
@@ -106,12 +108,12 @@ def find_card():
     # cv.imshow('max contour',drawn_maxcont)
     # cv.waitKey(0)
 
-    cv.drawContours(drawn_can_maxcont, cont_sort, -1, (255,255,0),3)
+    cv.drawContours(drawn_can_maxcont, suit, -1, (255,255,0),3)
     cv.imshow('suit',drawn_can_maxcont)
     cv.waitKey(0)
-    # cv.drawContours(drawn_maxcont, rank, -1, (255,255,0),3)
-    # cv.imshow('rank',drawn_can_maxcont)
-    # cv.waitKey(0)
+    cv.drawContours(drawn_maxcont, rank, -1, (255,255,0),3)
+    cv.imshow('rank',drawn_maxcont)
+    cv.waitKey(0)
 
     # print(str(dst))
     # print(str(mask))
