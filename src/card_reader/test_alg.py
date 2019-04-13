@@ -24,7 +24,7 @@ def prep(im, mode=True):
         ero = cv.erode(thresh,kernel,iterations=1)
         dil = cv.dilate(ero,kernel,iterations=1)
     else:
-        print('got to here')
+        # print('got to here')
         gray = cv.cvtColor(im, cv.COLOR_BGR2GRAY)
         # Gaussian blur
         blur = cv.GaussianBlur(gray,(9,9),2)
@@ -37,6 +37,15 @@ def prep(im, mode=True):
 
     return gray, blur, thresh, ero, dil
 
+def find_box(contours):
+    polys = []
+    bound_box = []
+
+    for contour in contours:
+        poly = cv.approxPolyDP(contour, 3, True)
+        bound_box.append(cv.boundingRect(poly))
+        polys.append(poly)
+
 def canny_sort(mode=True, dil=None, im=None):
     if not ((dil is None) and (im is None)):
         edges = cv.Canny(dil, 0, 255)
@@ -44,7 +53,7 @@ def canny_sort(mode=True, dil=None, im=None):
         dst = im * (mask[:,:,None].astype(im.dtype))
         _, contours, _ = cv.findContours(edges,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE)
         cont_sort = sorted(contours,key=cv.contourArea,reverse=True)[:1]
-        return im, cont_sort
+        return im, contours, cont_sort
     elif (dil is None):
         if (im is None):
             cam.capture('test.jpg')
@@ -63,14 +72,14 @@ def canny_sort(mode=True, dil=None, im=None):
             else:
                 raise RankSuitNotFound('suit',str(cont_sort[-1].size))
         else:
-            return im, cont_sort
+            return im, contours, cont_sort
 
 def find_card():
     found = False
     while not found:
         try:
-            im, rank = canny_sort(True)
-            _, suit = canny_sort(False)
+            im, _, rank = canny_sort(True)
+            _, _, suit = canny_sort(False)
             print('rank size: ',rank[-1].size)
             print('suit size: ',suit[-1].size)
             if ((cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)) < 1):
@@ -85,7 +94,8 @@ def find_card():
             
     draw_suit = np.zeros_like(im)
     draw_rank = np.zeros_like(im)
-
+    print(str(rank))
+    print(str(suit))
     cv.drawContours(draw_suit, suit, -1, (255,255,0),3)
     cv.imshow('suit',draw_suit)
     cv.waitKey(0)
