@@ -37,14 +37,15 @@ def prep(im, mode=True):
 
     return gray, blur, thresh, ero, dil
 
-def find_box(contours):
-    polys = []
-    bound_box = []
-
-    for contour in contours:
-        poly = cv.approxPolyDP(contour, 3, True)
-        bound_box.append(cv.boundingRect(poly))
-        polys.append(poly)
+# def find_box(contours, edges):
+#     # polys = []
+#     bound_box = []
+#     drawing = np.zeros((edges.shape[0], edges.shape[1], 3), dtype=np.uint8)
+#     for contour in contours:
+#         poly = cv.approxPolyDP(contour, 3, True)
+#         polys.append(poly)
+#         bound_box.append(cv.boundingRect(contour))
+#         cv.drawContours(drawing, polys, 
 
 def canny_sort(mode=True, dil=None, im=None):
     if not ((dil is None) and (im is None)):
@@ -78,10 +79,10 @@ def find_card():
     found = False
     while not found:
         try:
-            im, _, rank = canny_sort(True)
-            _, _, suit = canny_sort(False)
-            print('rank size: ',rank[-1].size)
-            print('suit size: ',suit[-1].size)
+            im, rank_conts, rank = canny_sort(True)
+            _, suit_conts, suit = canny_sort(False)
+            # print('rank size: ',rank[-1].size)
+            # print('suit size: ',suit[-1].size)
             if ((cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)) < 1):
                 log.warning('Accidentally found the same thing twice. Trying again.')
                 found = False
@@ -94,13 +95,19 @@ def find_card():
             
     draw_suit = np.zeros_like(im)
     draw_rank = np.zeros_like(im)
-    print(str(rank))
-    print(str(suit))
+    draw_rank_box = np.zeros_like(im)
+    rect_rank = cv.minAreaRect(rank[-1])
+    box_rank = np.int0(cv.boxPoints(rect_rank))
+    # print(str(rank))
+    # print(str(suit))
     cv.drawContours(draw_suit, suit, -1, (255,255,0),3)
     cv.imshow('suit',draw_suit)
     cv.waitKey(0)
     cv.drawContours(draw_rank, rank, -1, (255,255,0),3)
     cv.imshow('rank',draw_rank)
+    cv.waitKey(0)
+    cv.drawContours(draw_rank_box, [box_rank], 0, (255,255,0), 2)
+    cv.imshow('rank box', draw_rank_box)
     cv.waitKey(0)
     
 if __name__=='__main__':
