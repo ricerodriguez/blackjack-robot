@@ -119,7 +119,7 @@ def find_card():
     cv.waitKey(0)
 
     cv.drawContours(suit_box_drawing, suit, -1, (255,255,0),3)
-    cv.imshow('suit',suit_box_drawing)
+    cv.imshow('suit box',suit_box_drawing)
     cv.waitKey(0)
 
     cv.drawContours(draw_rank, rank, -1, (255,255,0),3)
@@ -127,7 +127,7 @@ def find_card():
     cv.waitKey(0)
 
     cv.drawContours(rank_box_drawing, rank, -1, (255,255,0),3)
-    cv.imshow('rank',rank_box_drawing)
+    cv.imshow('rank box',rank_box_drawing)
     cv.waitKey(0)
     # cv.drawContours(draw_rank_box, [box_rank], 0, (255,255,0), 2)
     # cv.imshow('rank box', draw_rank_box)
