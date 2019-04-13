@@ -37,6 +37,11 @@ def prep(im, mode=True):
 
     return gray, blur, thresh, ero, dil
 
+'''
+OpenCV Tutorial Code:
+https://docs.opencv.org/3.4/da/d0c/tutorial_bounding_rects_circles.html
+'''
+
 def find_box(contours, canny_input):
     contours_poly = [None]*len(contours)
     boundRect = [None]*len(contours)
@@ -45,10 +50,15 @@ def find_box(contours, canny_input):
     for i, c in enumerate(contours):
         contours_poly[i] = cv.approxPolyDP(c, 3, True)
         boundRect[i] = cv.boundingRect(contours_poly[i])
-        # centers[i], radius[i] = cv.minEnclosingCircle(contours_poly[i])
-    
     
     drawing = np.zeros((canny_input.shape[0], canny_input.shape[1], 3), dtype=np.uint8)
+
+    for i in range(len(contours)):
+        color = (rng.randint(0,256), rng.randint(0,256), rng.randint(0,256))
+        cv.drawContours(drawing, contours_poly, i, color)
+        cv.rectangle(drawing, (int(boundRect[i][0]), int(boundRect[i][1])), \
+          (int(boundRect[i][0]+boundRect[i][2]), int(boundRect[i][1]+boundRect[i][3])), color, 2)
+    
     return boundRect, contours_poly, drawing
     
     
