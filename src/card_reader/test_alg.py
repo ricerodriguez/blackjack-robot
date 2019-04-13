@@ -13,93 +13,52 @@ def prep(im):
     blur = cv.GaussianBlur(gray,(7,7),2)
     # Adaptive thresholding
     thresh = cv.adaptiveThreshold(blur,255,1,1,11,1)
-    return gray, blur, thresh
+    kernel = np.ones((5,5),np.uint8)
+    ero = cv.erode(thresh,kernel,iterations=1)
+    dil = cv.dilate(ero,kernel,iterations=1)
 
-def test_crop():
+    return gray, blur, thresh, ero, dil
+
+#############  Function to put vertices in clockwise order ######################
+def rectify(h):
+    ''' 
+    This function put vertices of square we got, in clockwise order 
+    Credit: http://git.io/vGi60A
+    '''
+    h = h.reshape((4,2))
+    hnew = np.zeros((4,2),dtype = np.float32)
+
+    add = h.sum(1)
+    hnew[0] = h[np.argmin(add)]
+    hnew[2] = h[np.argmax(add)]
+
+    diff = np.diff(h,axis = 1)
+    hnew[1] = h[np.argmin(diff)]
+    hnew[3] = h[np.argmax(diff)]
+
+return hnew
+
+def find_card():
     # Take a picture
     cam.capture('test.jpg')
     # Read in the card
-    card = cv.imread('test.jpg')
+    im = cv.imread('test.jpg')
     # Prep the image for the rest of everything else
-    gray, blur, thresh = prep(card)
-    kernel = np.ones((5,5),np.uint8)
-    dil = cv.dilate(gray, kernel, iterations = 1)
-    ero = cv.erode(dil, kernel, iterations = 1)
+    gray, blur, thresh, ero, dil = prep(im)
     # Find contours, save them to vector
-    _, contours, hierarchy = cv.findContours(ero, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+    _, contours, hiers = cv.findContours(ero, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+    # Sort contours (Credit: https://github.com/arnabdotorg/Playing-Card-Recognition/blob/master/card_img.py)
+    cont_sort = sorted(contours,key=cv.contourArea,reverse=True)[:1]
+    card = cont_sort[-1]
+    peri = cv.arcLength(card, True)
+    approx = rectify(cv.approxPolyDP(card,0.02*peri,True))
+    h = np.array([ [0,0], [500, 0], [500,500], [0,500]], np.float32)
+    tf = cv.getPerspectiveTransform(approx,h)
+    warp = cv.warpPerspective(im,tf,(500,500))
+    cv.imshow('warp',warp)
+    cv.waitKey(0)
 #    cont_drawn = cv.drawContours(card, contours, -1 (0,255,0),3)
     # Initialize lists for sorted contours and hierarchies
-    cont_sort = []
-    cont_inds = []
-    cont_areas = []
-    hier_sort = []
-    # polys = []
-    cnt_card = None
-    # Fill empty list with all the areas
-    for cnt in contours:
-        area = cv.contourArea(cnt)
-        cont_areas.append(area)
-        # polys.append(cv.approxPolyDP(cnt,3,True))
-    # New list is sorted version
-    cont_areas_sort = cont_areas.copy()
-    cont_areas_sort.sort()
-#    print(cont_areas)
-    # Find the index of each sorted one from the old one
-    for cnt in cont_areas_sort:
-        i_areas = cont_areas.index(cnt)
-        cont_inds.append(i_areas)
-    # Fill the sorted array with elements of the contours at the index found from last loop
-    for i in cont_inds:
-        cont_sort.append(contours[i])
-        hier_sort.append(hierarchy[0][i])
-
-    for i,cnt in enumerate(cont_sort):
-        size = cv.contourArea(cnt)
-        peri = cv.arcLength(cnt,True)
-        poly = cv.approxPolyDP(cnt,0.01*peri,True)
-        # boxes = []
-        # if (len(poly) == 4):
-        #     boxes.append(cnt)
-        # if ((len(poly) == 4) and (size > 400)):
-        #     cnt_card.append(cnt)
-        # if (size < 500):
-        #     continue
-
-        if ((size > 400) and (hier_sort[i][3] == -1) and (len(poly) == 4)):
-            cnt_card = cnt
-            print('got it')
-            break
-        else:
-            pass
-
-    x,y,w,h = cv.boundingRect(cnt_card)
-    roi = card[y:y+h,x:x+w]
-        
-    im_card = np.zeros_like(card)
-    #im_card = card.copy()
-    cv.drawContours(im_card,contours,-1,(255,255,0),3)
-    cv.imshow('card after',im_card)
-    cv.waitKey(0)
-    
-    cv.imwrite('contours.jpg',roi)
-
-    
-
-    
-        
-    
-    # # Approximate contours to polygons + get bounding
-    # # rects/circles
-    # cont_poly = [None]*len(contours)
-    # bound_box = [None]*len(contours)
-
-    # # For each of the contours found, approximate a polygon
-    # # from the contour, then draw a bounding box for that
-    # # polygon            
-    # for i,c in enumerate(contours):
-    #     cont_poly[i] = cv.approxPolyDP(c,3,True)
-    #     bound_box[i] = cv.boundingRect(cont_poly[i])
-
     # # Find the biggest bounding box
     # areas = []
     # for box in bound_box:
