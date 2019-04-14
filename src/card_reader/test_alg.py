@@ -108,25 +108,38 @@ def canny_sort(mode=True, dil=None, im=None):
             return im, contours, edges, cont_sort
 
 def find_card():
-    found = False
-    while not found:
+    rank_found = False
+    suit_found = False
+    while not rank_found:
         try:
             im, rank_conts, rank_edges, rank = canny_sort(True)
+            rank_found = True
+        except RankSuitNotFound as err:
+            log.warning('The {0} found was of size {1}, which is too large to be correct. Trying again.'.format(err.expression, err.message))
+            rank_found = False
+
+    while not suit_found:
+        try:
             _, suit_conts, suit_edges, suit = canny_sort(False)
+            # suit_found = True
+        except RankSuitNotFound as err:
+            log.warning('The {0} found was of size {1}, which is too large to be correct. Trying again.'.format(err.expression, err.message))
+            suit_found = False
+            continue
+
+        finally:
             # print('rank size: ',rank[-1].size)
             # print('suit size: ',suit[-1].size)
             if (((cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)) < 3) or ((cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)) > 4)):
             # if ((cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)) > 4):
                 match = cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)
                 log.warning('Match was {}. Accidentally found the same thing twice. Trying again.'.format(match))
-                found = False
+                suit_found = False
             else:
                 print('Correct rank and suit sizes: \n',rank[-1].size,'\n',suit[-1].size,'\nContour match:',(cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)))
-                found = True
+                suit_found = True
             # print(str(cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1, 420.69)))
-        except RankSuitNotFound as err:
-            log.warning('The {0} found was of size {1}, which is too large to be correct. Trying again.'.format(err.expression, err.message))
-            found = False
+                
 
     
     _, rank_polys, _, rank_box_drawing = find_box(rank, rank_edges)
@@ -146,10 +159,6 @@ def find_card():
     center, size = tuple(map(int,center)),tuple(map(int,size))
     print(size)
     test = cv.getRectSubPix(new_im_rank, size, center)
- #   test = rotate_img(rank_rot_rect[-1], new_im_rank)
-
-    # test = (rotate_img(rect, new_im_rank) for rect in rank_rot_rect)
-    
     
     draw_suit = np.zeros_like(im)
     draw_rank = np.zeros_like(im)
