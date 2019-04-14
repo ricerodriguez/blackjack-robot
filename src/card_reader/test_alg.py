@@ -80,7 +80,7 @@ def find_rot_box(contours):
     return boxes, rects
 
         
-def canny_sort(mode=True, dil=None, im=None):
+def canny_sort(mode=True, im=None,dil=None):
     if not ((dil is None) and (im is None)):
         edges = cv.Canny(dil, 0, 255)
         mask = edges != 0
@@ -107,11 +107,11 @@ def canny_sort(mode=True, dil=None, im=None):
         else:
             return im, contours, edges, cont_sort
 
-def find_rank():
+def find_rank(inim = None):
     rank_found = False
     while not rank_found:
         try:
-            im, rank_conts, rank_edges, rank = canny_sort(True)
+            im, rank_conts, rank_edges, rank = canny_sort(mode=True,im=inim)
             rank_found = True
         except RankSuitNotFound as err:
             log.warning('The {0} found was of size {1}, which is too large to be correct. Trying again.'.format(err.expression, err.message))
@@ -147,8 +147,16 @@ def find_suit():
 
 def find_card():
     im, rank_conts, rank_edges, rank = find_rank()
-    im, suit_conts, suit_edges, suit = find_suit()
+    _, suit_conts, suit_edges, suit = find_suit()
     i = 0
+    # isame = 0
+    # while(rank[-1].size is suit[-1].size):
+    #     isame += 1
+    #     _, suit_conts, suit_edges, suit = find_suit()
+    #     if (i >= 5):
+    #         im, rank_conts, rank_edges, rank = find_rank()
+    
+
     # while (((cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)) < 3) or ((cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)) > 4)):
     match = cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)
     while (match < 2 or match > 4):
@@ -172,37 +180,37 @@ def find_card():
 
     rank_rot_rects = sorted(rank_rot_rects)
     
-    # new_im_rank = np.zeros_like(im)
-    # cv.drawContours(new_im_rank, rank_polys, -1, (128,255,0),2)
-    # new_im_suit = np.zeros_like(im)
-    # cv.drawContours(new_im_suit, suit_polys, -1, (128,255,0),2)
-    # rank_rect = rank_rot_rects[-1]
-    # suit_rect = suit_rot_rects[-1]
+    new_im_rank = np.zeros_like(im)
+    cv.drawContours(new_im_rank, rank_polys, -1, (128,255,0),2)
+    new_im_suit = np.zeros_like(im)
+    cv.drawContours(new_im_suit, suit_polys, -1, (128,255,0),2)
+    rank_rect = rank_rot_rects[-1]
+    suit_rect = suit_rot_rects[-1]
     
-    # rank_warp = crop_to_area(new_im_rank,rank_rect)
-    # suit_warp = crop_to_area(new_im_suit,suit_rect)
+    rank_warp = crop_to_area(new_im_rank,rank_rect)
+    suit_warp = crop_to_area(new_im_suit,suit_rect)
 
-    # cv.imshow('cropped rank',rank_warp)
-    # cv.waitKey(0)
-    # cv.imshow('cropped suit',suit_warp)
-    # cv.waitKey(0)
-    
-    draw_suit = np.zeros_like(im)
-    draw_rank = np.zeros_like(im)
-    draw_min_suit = np.zeros_like(im)
-    draw_min_rank = np.zeros_like(im)
-    
-    cv.drawContours(draw_suit, suit, -1, (255,255,0),3)
-    cv.imshow('working',draw_suit)
+    cv.imshow('cropped rank',rank_warp)
     cv.waitKey(0)
+    cv.imshow('cropped suit',suit_warp)
+    cv.waitKey(0)
+    
+    # draw_suit = np.zeros_like(im)
+    # draw_rank = np.zeros_like(im)
+    # draw_min_suit = np.zeros_like(im)
+    # draw_min_rank = np.zeros_like(im)
+    
+    # cv.drawContours(draw_suit, suit, -1, (255,255,0),3)
+    # cv.imshow('working',draw_suit)
+    # cv.waitKey(0)
 
     # cv.drawContours(draw_min_suit,suit_boxes,0,(255,135,0),2)
     # cv.imshow('working',draw_min_suit)
     # cv.waitKey(0)
 
-    cv.drawContours(draw_rank, rank, -1, (255,255,0),3)
-    cv.imshow('working',draw_rank)
-    cv.waitKey(0)
+    # cv.drawContours(draw_rank, rank, -1, (255,255,0),3)
+    # cv.imshow('working',draw_rank)
+    # cv.waitKey(0)
 
     # cv.drawContours(draw_min_rank,rank_boxes,0,(255,135,0),2)
     # cv.imshow('working',draw_min_rank)
