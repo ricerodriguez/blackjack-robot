@@ -3,6 +3,7 @@ import numpy as np
 import logging as log
 # from scipy.spatial import distance as dist
 from picamera import PiCamera
+from PIL import Image
 cam = PiCamera()
 
 class RankSuitNotFound(Exception):
@@ -173,12 +174,68 @@ def find_card():
     rank_warp = crop_to_area(new_im_rank,rank_rect)
     suit_warp = crop_to_area(new_im_suit,suit_rect)
 
-    # final_im = np.vstack((rank_warp,suit_warp))
+    print(rank_warp.shape)
+    print(suit_warp.shape)
+    max_x = max(rank_warp.shape[0], suit_warp.shape[0])
+    max_y = max(rank_warp.shape[1], suit_warp.shape[1])
+    print(max_x)
+    print(max_y)
 
-    cv.imshow('cropped rank',rank_warp)
+    rw_copy = rank_warp.copy()
+    rw_copy.resize((max_x, max_y, 3))
+    sw_copy = suit_warp.copy()
+    sw_copy.resize((max_x, sw_copy.shape[1], 3))
+    # sw_copy = np.resize(sw_copy,(max_x, max_y, 3))
+
+    final_im = np.hstack((rw_copy, sw_copy))
+    cv.imshow('test',final_im)
     cv.waitKey(0)
-    cv.imshow('cropped suit',suit_warp)
-    cv.waitKey(0)
+
+    # final_im = Image.new('RGB',(200,200))
+    # rank_im = Image.fromarray(rank_warp, 'RGBA')
+    # suit_warp = Image.fromarray(suit_warp, 'RGBA')
+    # final_im.paste(rank_im, (0,0), rank_im)
+    # final_im.paste(suit_im, (0,rank_warp.shape[0]), suit_im)
+    # final_im.show()
+    
+
+    # imgs = [rank_warp,suit_warp]
+    # min_shape = sorted([i.shape for i in imgs])[-1]
+    # # imgs_comb = np.vstack( (np.asarray( i.resize(min_shape, refcheck=False) ) for i in imgs) )
+    # rw_copy = rank_warp.copy()
+    # sw_copy = suit_warp.copy()
+    # # rw_copy.resize(min_shape)
+    # test1 = np.resize(rw_copy,min_shape)
+    # test2 = np.resize(sw_copy,min_shape)
+    # cv.imshow('test',rw_copy)
+    # cv.waitKey(0)
+    # cv.imshow('test',test1)
+    # cv.waitKey(0)
+    # # final_im = np.vstack((rank_warp,suit_warp))
+    # # final_cols = rank_warp.shape[0]+suit_warp.shape[0]
+    # # final_rows = rank_warp.shape[1]+suit_warp.shape[1]
+
+    # # final_im = np.zeros((final_cols,final_rows),np.float32)
+
+    # bigger_x = max(rank_warp.shape[0],suit_warp.shape[0])
+    # bigger_y = max(rank_warp.shape[1],suit_warp.shape[1])
+    # rw_copy = rank_warp.copy()
+    # sw_copy = suit_warp.copy()
+    # rw_copy.resize((bigger_x*bigger_y))
+    # sw_copy.resize((bigger_x*bigger_y))
+    # rw_copy.reshape((bigger_x,bigger_y))
+    # sw_copy.reshape((bigger_x,bigger_y))
+    # # test1 = np.resize(rw_copy,(bigger_x,bigger_y))
+    # # test2 = np.resize(sw_copy,(bigger_x,bigger_y))
+    
+    # final_im = np.vstack((rw_copy,sw_copy))
+    # # final_im = np.vstack((test1,test2))
+    # cv.imshow('final',final_im)
+    # cv.waitKey(0)
+    # cv.imshow('cropped rank',rw_copy)
+    # cv.waitKey(0)
+    # cv.imshow('cropped suit',test1)
+    # cv.waitKey(0)
     
     # draw_suit = np.zeros_like(im)
     # draw_rank = np.zeros_like(im)
