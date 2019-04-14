@@ -107,9 +107,8 @@ def canny_sort(mode=True, dil=None, im=None):
         else:
             return im, contours, edges, cont_sort
 
-def find_card():
+def find_rank():
     rank_found = False
-    suit_found = False
     while not rank_found:
         try:
             im, rank_conts, rank_edges, rank = canny_sort(True)
@@ -118,47 +117,85 @@ def find_card():
             log.warning('The {0} found was of size {1}, which is too large to be correct. Trying again.'.format(err.expression, err.message))
             rank_found = False
 
+    return im, rank_conts, rank_edges, rank
+
+def find_suit():
+    suit_found = False
     while not suit_found:
         try:
-            _, suit_conts, suit_edges, suit = canny_sort(False)
-            # suit_found = True
+            im, suit_conts, suit_edges, suit = canny_sort(False)
+            suit_found = True
         except RankSuitNotFound as err:
             log.warning('The {0} found was of size {1}, which is too large to be correct. Trying again.'.format(err.expression, err.message))
             suit_found = False
-            continue
 
-        finally:
-            # print('rank size: ',rank[-1].size)
-            # print('suit size: ',suit[-1].size)
-            if (((cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)) < 3) or ((cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)) > 4)):
-            # if ((cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)) > 4):
-                match = cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)
-                log.warning('Match was {}. Accidentally found the same thing twice. Trying again.'.format(match))
-                suit_found = False
-            else:
-                print('Correct rank and suit sizes: \n',rank[-1].size,'\n',suit[-1].size,'\nContour match:',(cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)))
-                suit_found = True
-            # print(str(cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1, 420.69)))
-                
+    return im, suit_conts, suit_edges, suit
 
+def find_card():
+    im, rank_conts, rank_edges, rank = find_rank()
+    im, suit_conts, suit_edges, suit = find_suit()
+    i = 0
+    while (((cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)) < 3) or ((cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)) > 4)):
+        match = cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)
+        log.warning('Match was {}. Accidentally found the same thing twice. Trying again.'.format(match))
+        i+=1
+        if (i >= 5):
+            im, rank_conts, rank_edges, rank = find_rank()
+            _, suit_conts, suit_edges, suit = find_suit()
+        else:
+            im, rank_conts, rank_edges, rank = find_rank()
+
+            
+    
+    # while not suit_found:
+    #     try:
+    #         _, suit_conts, suit_edges, suit = canny_sort(False)
+    #         # print('rank size: ',rank[-1].size)
+    #         # print('suit size: ',suit[-1].size)
+    #         if (((cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)) < 3) or ((cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)) > 4)):
+    #         # if ((cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)) > 4):
+    #             match = cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)
+    #             log.warning('Match was {}. Accidentally found the same thing twice. Trying again.'.format(match))
+    #             suit_found = False
+    #         else:
+    #             print('Correct rank and suit sizes: \n',rank[-1].size,'\n',suit[-1].size,'\nContour match:',(cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)))
+    #             suit_found = True
+    #         # print(str(cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1, 420.69)))
+    #         # suit_found = True
+    #     except RankSuitNotFound as err:
+    #         log.warning('The {0} found was of size {1}, which is too large to be correct. Trying again.'.format(err.expression, err.message))
+    #         suit_found = False
     
     _, rank_polys, _, rank_box_drawing = find_box(rank, rank_edges)
     _, suit_polys, _, suit_box_drawing = find_box(suit, suit_edges)
     rank_boxes, rank_rot_rects = find_rot_box(rank)
     suit_boxes, suit_rot_rects = find_rot_box(suit)
 
-    def get_size(rect):
-        return rect.size
+    # def get_size(rect):
+    #     return rect.size
     
     rank_rot_rects = sorted(rank_rot_rects)
     
     new_im_rank = np.zeros_like(im)
     cv.drawContours(new_im_rank, rank_polys, -1, (128,255,0),2)
-    # rect = rank_rot_rect[-1]
-    center, size, angle = rank_rot_rects[-1]
-    center, size = tuple(map(int,center)),tuple(map(int,size))
-    print(size)
-    test = cv.getRectSubPix(new_im_rank, size, center)
+    rect = rank_rot_rects[-1]
+    box = cv.boxPoints(rect)
+    # center, size, angle = rank_rot_rects[-1]
+    # center, size = tuple(map(int,center)),tuple(map(int,size))
+    # print(size)
+    # test = cv.getRectSubPix(new_im_rank, size, center)
+
+    width = int(rect[1][0])
+    height = int(rect[1][1])
+    src = box.astype('float32')
+    dst = np.array([[0, height-1],
+                    [0,0],
+                    [width-1,0],
+                    [width-1, height-1]],np.float32)
+    mat = cv.getPerspectiveTransform(src,dst)
+    warp = cv.warpPerspective(new_im_rank,mat,(width,height))
+    cv.imshow('cropped rank',warp)
+    cv.waitKey(0)
     
     draw_suit = np.zeros_like(im)
     draw_rank = np.zeros_like(im)
@@ -179,9 +216,6 @@ def find_card():
 
     cv.drawContours(draw_min_rank,rank_boxes,0,(255,135,0),2)
     cv.imshow('working',draw_min_rank)
-    cv.waitKey(0)
-
-    cv.imshow('working',test)
     cv.waitKey(0)
 
     # cv.imshow('working',rank_box_drawing)
