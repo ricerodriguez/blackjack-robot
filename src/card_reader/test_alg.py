@@ -119,6 +119,20 @@ def find_rank():
 
     return im, rank_conts, rank_edges, rank
 
+def crop_to_area(im,rect):
+    width = int(rect[1][0])
+    height = int(rect[1][1])
+    box = cv.boxPoints(rect)
+    box = np.int0(box)
+    src = box.astype('float32')
+    dst = np.array([[0, height-1],
+                    [0,0],
+                    [width-1,0],
+                    [width-1, height-1]],np.float32)
+    mat = cv.getPerspectiveTransform(src,dst)
+    warp = cv.warpPerspective(im,mat,(width,height))
+    return warp    
+
 def find_suit():
     suit_found = False
     while not suit_found:
@@ -135,7 +149,9 @@ def find_card():
     im, rank_conts, rank_edges, rank = find_rank()
     im, suit_conts, suit_edges, suit = find_suit()
     i = 0
-    while (((cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)) < 3) or ((cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)) > 4)):
+    # while (((cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)) < 3) or ((cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)) > 4)):
+    match = cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)
+    while (match < 2 or match > 4):
         match = cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)
         log.warning('Match was {}. Accidentally found the same thing twice. Trying again.'.format(match))
         i+=1
@@ -144,58 +160,32 @@ def find_card():
             _, suit_conts, suit_edges, suit = find_suit()
         else:
             im, rank_conts, rank_edges, rank = find_rank()
-
-            
-    
-    # while not suit_found:
-    #     try:
-    #         _, suit_conts, suit_edges, suit = canny_sort(False)
-    #         # print('rank size: ',rank[-1].size)
-    #         # print('suit size: ',suit[-1].size)
-    #         if (((cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)) < 3) or ((cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)) > 4)):
-    #         # if ((cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)) > 4):
-    #             match = cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)
-    #             log.warning('Match was {}. Accidentally found the same thing twice. Trying again.'.format(match))
-    #             suit_found = False
-    #         else:
-    #             print('Correct rank and suit sizes: \n',rank[-1].size,'\n',suit[-1].size,'\nContour match:',(cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)))
-    #             suit_found = True
-    #         # print(str(cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1, 420.69)))
-    #         # suit_found = True
-    #     except RankSuitNotFound as err:
-    #         log.warning('The {0} found was of size {1}, which is too large to be correct. Trying again.'.format(err.expression, err.message))
-    #         suit_found = False
+        
+    print('rank size: ',rank[-1].size)
+    print('suit size: ',suit[-1].size)
+    print('match: ',match)
     
     _, rank_polys, _, rank_box_drawing = find_box(rank, rank_edges)
     _, suit_polys, _, suit_box_drawing = find_box(suit, suit_edges)
     rank_boxes, rank_rot_rects = find_rot_box(rank)
     suit_boxes, suit_rot_rects = find_rot_box(suit)
 
-    # def get_size(rect):
-    #     return rect.size
-    
     rank_rot_rects = sorted(rank_rot_rects)
     
-    new_im_rank = np.zeros_like(im)
-    cv.drawContours(new_im_rank, rank_polys, -1, (128,255,0),2)
-    rect = rank_rot_rects[-1]
-    box = cv.boxPoints(rect)
-    # center, size, angle = rank_rot_rects[-1]
-    # center, size = tuple(map(int,center)),tuple(map(int,size))
-    # print(size)
-    # test = cv.getRectSubPix(new_im_rank, size, center)
+    # new_im_rank = np.zeros_like(im)
+    # cv.drawContours(new_im_rank, rank_polys, -1, (128,255,0),2)
+    # new_im_suit = np.zeros_like(im)
+    # cv.drawContours(new_im_suit, suit_polys, -1, (128,255,0),2)
+    # rank_rect = rank_rot_rects[-1]
+    # suit_rect = suit_rot_rects[-1]
+    
+    # rank_warp = crop_to_area(new_im_rank,rank_rect)
+    # suit_warp = crop_to_area(new_im_suit,suit_rect)
 
-    width = int(rect[1][0])
-    height = int(rect[1][1])
-    src = box.astype('float32')
-    dst = np.array([[0, height-1],
-                    [0,0],
-                    [width-1,0],
-                    [width-1, height-1]],np.float32)
-    mat = cv.getPerspectiveTransform(src,dst)
-    warp = cv.warpPerspective(new_im_rank,mat,(width,height))
-    cv.imshow('cropped rank',warp)
-    cv.waitKey(0)
+    # cv.imshow('cropped rank',rank_warp)
+    # cv.waitKey(0)
+    # cv.imshow('cropped suit',suit_warp)
+    # cv.waitKey(0)
     
     draw_suit = np.zeros_like(im)
     draw_rank = np.zeros_like(im)
@@ -206,17 +196,17 @@ def find_card():
     cv.imshow('working',draw_suit)
     cv.waitKey(0)
 
-    cv.drawContours(draw_min_suit,suit_boxes,0,(255,135,0),2)
-    cv.imshow('working',draw_min_suit)
-    cv.waitKey(0)
+    # cv.drawContours(draw_min_suit,suit_boxes,0,(255,135,0),2)
+    # cv.imshow('working',draw_min_suit)
+    # cv.waitKey(0)
 
     cv.drawContours(draw_rank, rank, -1, (255,255,0),3)
     cv.imshow('working',draw_rank)
     cv.waitKey(0)
 
-    cv.drawContours(draw_min_rank,rank_boxes,0,(255,135,0),2)
-    cv.imshow('working',draw_min_rank)
-    cv.waitKey(0)
+    # cv.drawContours(draw_min_rank,rank_boxes,0,(255,135,0),2)
+    # cv.imshow('working',draw_min_rank)
+    # cv.waitKey(0)
 
     # cv.imshow('working',rank_box_drawing)
     # cv.waitKey(0)
