@@ -80,44 +80,39 @@ def find_rot_box(contours):
     return boxes, rects
 
         
-def canny_sort(mode=True, im=None,dil=None):
-    if not ((dil is None) and (im is None)):
-        edges = cv.Canny(dil, 0, 255)
-        mask = edges != 0
-        dst = im * (mask[:,:,None].astype(im.dtype))
-        _, contours, _ = cv.findContours(edges,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE)
-        cont_sort = sorted(contours,key=cv.contourArea,reverse=True)[:1]
-        return im, contours, edges, cont_sort
-    elif (dil is None):
-        if (im is None):
-            cam.capture('test.jpg')
-            im = cv.imread('test.jpg')
-            # yield im
-        _, _, _, _, dil = prep(im,mode)
-        edges = cv.Canny(dil, 0, 255)
-        mask = edges != 0
-        dst = im * (mask[:,:,None].astype(im.dtype))
-        _, contours, _ = cv.findContours(edges,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE)
-        cont_sort = sorted(contours,key=cv.contourArea,reverse=True)[:1]
-        if (cont_sort[-1].size > 350):
-            if mode:
-                raise RankSuitNotFound('rank', str(cont_sort[-1].size))
-            else:
-                raise RankSuitNotFound('suit',str(cont_sort[-1].size))
+def canny_sort(mode, im):
+    # yield im
+    _, _, _, _, dil = prep(im,mode)
+    edges = cv.Canny(dil, 0, 255)
+    mask = edges != 0
+    dst = im * (mask[:,:,None].astype(im.dtype))
+    _, contours, _ = cv.findContours(edges,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE)
+    cont_sort = sorted(contours,key=cv.contourArea,reverse=True)[:1]
+    if (cont_sort[-1].size > 350):
+        if mode:
+            raise RankSuitNotFound('rank', str(cont_sort[-1].size))
         else:
-            return im, contours, edges, cont_sort
+            raise RankSuitNotFound('suit',str(cont_sort[-1].size))
+    else:
+        return im, contours, edges, cont_sort
 
-def find_rank(inim = None):
-    rank_found = False
-    while not rank_found:
+def find_rank_suit(mode,im=None):
+    found = False
+    if im is None:
+        cam.capture('test.jpg')
+        im = cv.imread('test.jpg')
+        
+    while not found:
         try:
-            im, rank_conts, rank_edges, rank = canny_sort(mode=True,im=inim)
-            rank_found = True
+            im, conts, edges, conts_sort = canny_sort(mode,im)
+            found = True
         except RankSuitNotFound as err:
             log.warning('The {0} found was of size {1}, which is too large to be correct. Trying again.'.format(err.expression, err.message))
-            rank_found = False
+            cam.capture('test.jpg')
+            im = cv.imread('test.jpg')
+            found = False
 
-    return im, rank_conts, rank_edges, rank
+    return im, conts, edges, conts_sort
 
 def crop_to_area(im,rect):
     width = int(rect[1][0])
@@ -133,21 +128,9 @@ def crop_to_area(im,rect):
     warp = cv.warpPerspective(im,mat,(width,height))
     return warp    
 
-def find_suit():
-    suit_found = False
-    while not suit_found:
-        try:
-            im, suit_conts, suit_edges, suit = canny_sort(False)
-            suit_found = True
-        except RankSuitNotFound as err:
-            log.warning('The {0} found was of size {1}, which is too large to be correct. Trying again.'.format(err.expression, err.message))
-            suit_found = False
-
-    return im, suit_conts, suit_edges, suit
-
 def find_card():
-    im, rank_conts, rank_edges, rank = find_rank()
-    _, suit_conts, suit_edges, suit = find_suit()
+    im, rank_conts, rank_edges, rank = find_rank_suit(True)
+    _, suit_conts, suit_edges, suit = find_rank_suit(False,im)
     i = 0
     # isame = 0
     # while(rank[-1].size is suit[-1].size):
@@ -164,10 +147,10 @@ def find_card():
         log.warning('Match was {}. Accidentally found the same thing twice. Trying again.'.format(match))
         i+=1
         if (i >= 5):
-            im, rank_conts, rank_edges, rank = find_rank()
-            _, suit_conts, suit_edges, suit = find_suit()
+            im, rank_conts, rank_edges, rank = find_rank_suit(True)
+            _, suit_conts, suit_edges, suit = find_rank_suit(False,im)
         else:
-            im, rank_conts, rank_edges, rank = find_rank()
+            im, rank_conts, rank_edges, rank = find_rank_suit(True)
         
     print('rank size: ',rank[-1].size)
     print('suit size: ',suit[-1].size)
@@ -189,6 +172,8 @@ def find_card():
     
     rank_warp = crop_to_area(new_im_rank,rank_rect)
     suit_warp = crop_to_area(new_im_suit,suit_rect)
+
+    # final_im = np.vstack((rank_warp,suit_warp))
 
     cv.imshow('cropped rank',rank_warp)
     cv.waitKey(0)
