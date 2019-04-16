@@ -12,25 +12,38 @@ class RankSuitNotFound(Exception):
         self.message = message
 
 def prep(im, mode=True):
+      # Convert to gray and blur it
+    gray = cv.cvtColor(im, cv.COLOR_BGR2GRAY)
     if mode:
-        # Convert to gray and blur it
-        gray = cv.cvtColor(im, cv.COLOR_BGR2GRAY)
         # Gaussian blur
         blur = cv.GaussianBlur(gray,(5,5),2)
-        # Adaptive thresholding
-        thresh = cv.adaptiveThreshold(blur,255,1,1,11,1)
-        kernel = np.ones((5,5),np.uint8)
-        ero = cv.erode(thresh,kernel,iterations=1)
-        dil = cv.dilate(ero,kernel,iterations=1)
     else:
-        gray = cv.cvtColor(im, cv.COLOR_BGR2GRAY)
         # Gaussian blur
         blur = cv.GaussianBlur(gray,(9,9),2)
-        # Adaptive thresholding
-        thresh = cv.adaptiveThreshold(blur,255,1,1,11,1)
-        kernel = np.ones((5,5),np.uint8)
-        ero = cv.erode(thresh,kernel,iterations=1)
-        dil = cv.dilate(ero,kernel,iterations=1)
+    # Adaptive thresholding
+    thresh = cv.adaptiveThreshold(blur,255,1,1,11,1)
+    kernel = np.ones((5,5),np.uint8)
+    ero = cv.erode(thresh,kernel,iterations=1)
+    dil = cv.dilate(ero,kernel,iterations=1)
+    # if mode:
+    #     # Convert to gray and blur it
+    #     gray = cv.cvtColor(im, cv.COLOR_BGR2GRAY)
+    #     # Gaussian blur
+    #     blur = cv.GaussianBlur(gray,(5,5),2)
+    #     # Adaptive thresholding
+    #     thresh = cv.adaptiveThreshold(blur,255,1,1,11,1)
+    #     kernel = np.ones((5,5),np.uint8)
+    #     ero = cv.erode(thresh,kernel,iterations=1)
+    #     dil = cv.dilate(ero,kernel,iterations=1)
+    # else:
+    #     gray = cv.cvtColor(im, cv.COLOR_BGR2GRAY)
+    #     # Gaussian blur
+    #     blur = cv.GaussianBlur(gray,(9,9),2)
+    #     # Adaptive thresholding
+    #     thresh = cv.adaptiveThreshold(blur,255,1,1,11,1)
+    #     kernel = np.ones((5,5),np.uint8)
+    #     ero = cv.erode(thresh,kernel,iterations=1)
+    #     dil = cv.dilate(ero,kernel,iterations=1)
         
 
     return gray, blur, thresh, ero, dil
