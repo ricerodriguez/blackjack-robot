@@ -1,3 +1,4 @@
+import os
 import cv2 as cv
 import numpy as np
 import logging as log
@@ -137,8 +138,8 @@ def find_card():
         else:
             im, rank_conts, rank_edges, rank = find_rank_suit(True)
         
-    print('rank size: ',rank[-1].size)
-    print('suit size: ',suit[-1].size)
+    print('rank: \n\t size: ',rank[-1].size,'\n\t shape: ',rank.shape)
+    print('suit: \n\t size: ',suit[-1].size,'\n\t shape: ',suit.shape)
     print('match: ',match)
     
     _, rank_polys, _, rank_box_drawing = find_box(rank, rank_edges)
@@ -158,12 +159,12 @@ def find_card():
     rank_warp = crop_to_area(new_im_rank,rank_rect)
     suit_warp = crop_to_area(new_im_suit,suit_rect)
 
-    print(rank_warp.shape)
-    print(suit_warp.shape)
+    # print(rank_warp.shape)
+    # print(suit_warp.shape)
     max_x = max(rank_warp.shape[0], suit_warp.shape[0])
     max_y = max(rank_warp.shape[1], suit_warp.shape[1])
-    print(max_x)
-    print(max_y)
+    # print(max_x)
+    # print(max_y)
 
     rw_copy = rank_warp.copy()
     rw_copy.resize((max_x, max_y, 3))
@@ -173,6 +174,13 @@ def find_card():
     final_im = np.hstack((rw_copy, sw_copy))
     cv.imshow('test',final_im)
     cv.waitKey(0)
+
+    print('final image: \n\t size: ',final_im.size,'\n\t shape: ',final_im.shape)
+
+    if not os.path.exists('images'):
+        os.makedir('images')
+
+    cv.imwrite('images/{}'.format(sys.argv[1]),final_im)
     
 if __name__=='__main__':
     find_card()
