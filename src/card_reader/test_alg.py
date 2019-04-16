@@ -138,8 +138,8 @@ def find_card():
         else:
             im, rank_conts, rank_edges, rank = find_rank_suit(True)
         
-    print('rank: \n\t size: ',rank[-1].size,'\n\t shape: ',rank.shape)
-    print('suit: \n\t size: ',suit[-1].size,'\n\t shape: ',suit.shape)
+    print('rank: \n\t size: ',rank[-1].size,'\n\t shape: ',rank[-1].shape)
+    print('suit: \n\t size: ',suit[-1].size,'\n\t shape: ',suit[-1].shape)
     print('match: ',match)
     
     _, rank_polys, _, rank_box_drawing = find_box(rank, rank_edges)
@@ -178,7 +178,7 @@ def find_card():
     print('final image: \n\t size: ',final_im.size,'\n\t shape: ',final_im.shape)
 
     if not os.path.exists('images'):
-        os.makedir('images')
+        os.makedirs('images')
 
     cv.imwrite('images/{}'.format(sys.argv[1]),final_im)
     
