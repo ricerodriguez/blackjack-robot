@@ -1,4 +1,5 @@
 import os
+import sys
 import cv2 as cv
 import numpy as np
 import logging as log
@@ -14,17 +15,16 @@ class RankSuitNotFound(Exception):
 def prep(im, mode=True):
       # Convert to gray and blur it
     gray = cv.cvtColor(im, cv.COLOR_BGR2GRAY)
-    if mode:
-        # Gaussian blur
-        blur = cv.GaussianBlur(gray,(5,5),2)
-    else:
-        # Gaussian blur
-        blur = cv.GaussianBlur(gray,(9,9),2)
+    blur = cv.GaussianBlur(gray,(0,0),2)
     # Adaptive thresholding
     thresh = cv.adaptiveThreshold(blur,255,1,1,11,1)
     kernel = np.ones((5,5),np.uint8)
     ero = cv.erode(thresh,kernel,iterations=1)
-    dil = cv.dilate(ero,kernel,iterations=1)
+    if mode:
+        # Gaussian blur
+        dil = cv.dilate(ero,kernel,iterations=2)
+    else:
+        dil = cv.dilate(ero,kernel,iterations=3)
     # if mode:
     #     # Convert to gray and blur it
     #     gray = cv.cvtColor(im, cv.COLOR_BGR2GRAY)
@@ -95,11 +95,10 @@ def canny_sort(mode, im):
     dst = im * (mask[:,:,None].astype(im.dtype))
     _, contours, _ = cv.findContours(edges,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE)
     cont_sort = sorted(contours,key=cv.contourArea,reverse=True)[:1]
-    if (cont_sort[-1].size > 350):
-        if mode:
-            raise RankSuitNotFound('rank', str(cont_sort[-1].size))
-        else:
-            raise RankSuitNotFound('suit',str(cont_sort[-1].size))
+    if ((cont_sort[-1].size > 350) or cont_sort[-1].size < 200) and mode:
+        raise RankSuitNotFound('rank', str(cont_sort[-1].size))
+    elif ((cont_sort[-1].size > 400) or cont_sort[-1].size < 200) and not mode:
+        raise RankSuitNotFound('suit', str(cont_sort[-1].size))
     else:
         return im, contours, edges, cont_sort
 
@@ -141,7 +140,7 @@ def find_card():
     i = 0
 
     match = cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)
-    while (match < 2 or match > 4):
+    while (match < 1 or match > 2):
         match = cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)
         log.warning('Match was {}. Accidentally found the same thing twice. Trying again.'.format(match))
         i+=1
@@ -172,17 +171,28 @@ def find_card():
     rank_warp = crop_to_area(new_im_rank,rank_rect)
     suit_warp = crop_to_area(new_im_suit,suit_rect)
 
+    cv.imshow('test',rank_warp)
+    cv.waitKey(0)
+
+    cv.imshow('test',suit_warp)
+    cv.waitKey(0)
+
     # print(rank_warp.shape)
     # print(suit_warp.shape)
     max_x = max(rank_warp.shape[0], suit_warp.shape[0])
     max_y = max(rank_warp.shape[1], suit_warp.shape[1])
+    max_z = max(rank_warp.shape[2], suit_warp.shape[2])
     # print(max_x)
     # print(max_y)
 
-    rw_copy = rank_warp.copy()
-    rw_copy.resize((max_x, max_y, 3))
     sw_copy = suit_warp.copy()
-    sw_copy.resize((max_x, sw_copy.shape[1], 3))
+    sw_copy.resize((max_x, max_y, max_z))
+    cv.imshow('suit copy',sw_copy)
+    cv.waitKey(0)
+    rw_copy = rank_warp.copy()
+    rw_copy.resize((max_x, rw_copy.shape[1], max_z))
+    cv.imshow('rank copy',rw_copy)
+    cv.waitKey(0)
 
     final_im = np.hstack((rw_copy, sw_copy))
     cv.imshow('test',final_im)
