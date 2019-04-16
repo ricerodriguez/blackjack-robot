@@ -1,9 +1,7 @@
 import cv2 as cv
 import numpy as np
 import logging as log
-# from scipy.spatial import distance as dist
 from picamera import PiCamera
-from PIL import Image
 cam = PiCamera()
 
 class RankSuitNotFound(Exception):
@@ -24,7 +22,6 @@ def prep(im, mode=True):
         ero = cv.erode(thresh,kernel,iterations=1)
         dil = cv.dilate(ero,kernel,iterations=1)
     else:
-        # print('got to here')
         gray = cv.cvtColor(im, cv.COLOR_BGR2GRAY)
         # Gaussian blur
         blur = cv.GaussianBlur(gray,(9,9),2)
@@ -54,19 +51,16 @@ def find_box(contours, canny_input):
     drawing = np.zeros((canny_input.shape[0], canny_input.shape[1], 3), dtype=np.uint8)
     
     for i in range(len(contours)):
-        # color = (rng.randint(0,256), rng.randint(0,256), rng.randint(0,256))
         color1 = (255, 255, 0)
         color2 = (255, 128, 0)
         point1 = (int(boundRect[i][0]), int(boundRect[i][1]))
         point2 = (int(boundRect[i][0]+boundRect[i][2]), int(boundRect[i][1]+boundRect[i][3]))
         cv.drawContours(drawing, contours_poly, i, color1)
         cv.rectangle(drawing,point1,point2,color2,2)
-        # print(str(test))
     
     return boundRect, contours_poly, centers, drawing
 
 def find_rot_box(contours):
-    # polys = []
     rects = []
     boxes = []
     for contour in contours:
@@ -75,14 +69,12 @@ def find_rot_box(contours):
         rect = cv.minAreaRect(contour)
         box = cv.boxPoints(rect)
         box = np.int0(box)
-        # polys.append(poly)
         rects.append(rect)
         boxes.append(box)
     return boxes, rects
 
         
 def canny_sort(mode, im):
-    # yield im
     _, _, _, _, dil = prep(im,mode)
     edges = cv.Canny(dil, 0, 255)
     mask = edges != 0
@@ -133,15 +125,7 @@ def find_card():
     im, rank_conts, rank_edges, rank = find_rank_suit(True)
     _, suit_conts, suit_edges, suit = find_rank_suit(False,im)
     i = 0
-    # isame = 0
-    # while(rank[-1].size is suit[-1].size):
-    #     isame += 1
-    #     _, suit_conts, suit_edges, suit = find_suit()
-    #     if (i >= 5):
-    #         im, rank_conts, rank_edges, rank = find_rank()
-    
 
-    # while (((cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)) < 3) or ((cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)) > 4)):
     match = cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)
     while (match < 2 or match > 4):
         match = cv.matchShapes(rank[-1],suit[-1],cv.CONTOURS_MATCH_I1,420.69)
@@ -185,81 +169,10 @@ def find_card():
     rw_copy.resize((max_x, max_y, 3))
     sw_copy = suit_warp.copy()
     sw_copy.resize((max_x, sw_copy.shape[1], 3))
-    # sw_copy = np.resize(sw_copy,(max_x, max_y, 3))
 
     final_im = np.hstack((rw_copy, sw_copy))
     cv.imshow('test',final_im)
     cv.waitKey(0)
-
-    # final_im = Image.new('RGB',(200,200))
-    # rank_im = Image.fromarray(rank_warp, 'RGBA')
-    # suit_warp = Image.fromarray(suit_warp, 'RGBA')
-    # final_im.paste(rank_im, (0,0), rank_im)
-    # final_im.paste(suit_im, (0,rank_warp.shape[0]), suit_im)
-    # final_im.show()
-    
-
-    # imgs = [rank_warp,suit_warp]
-    # min_shape = sorted([i.shape for i in imgs])[-1]
-    # # imgs_comb = np.vstack( (np.asarray( i.resize(min_shape, refcheck=False) ) for i in imgs) )
-    # rw_copy = rank_warp.copy()
-    # sw_copy = suit_warp.copy()
-    # # rw_copy.resize(min_shape)
-    # test1 = np.resize(rw_copy,min_shape)
-    # test2 = np.resize(sw_copy,min_shape)
-    # cv.imshow('test',rw_copy)
-    # cv.waitKey(0)
-    # cv.imshow('test',test1)
-    # cv.waitKey(0)
-    # # final_im = np.vstack((rank_warp,suit_warp))
-    # # final_cols = rank_warp.shape[0]+suit_warp.shape[0]
-    # # final_rows = rank_warp.shape[1]+suit_warp.shape[1]
-
-    # # final_im = np.zeros((final_cols,final_rows),np.float32)
-
-    # bigger_x = max(rank_warp.shape[0],suit_warp.shape[0])
-    # bigger_y = max(rank_warp.shape[1],suit_warp.shape[1])
-    # rw_copy = rank_warp.copy()
-    # sw_copy = suit_warp.copy()
-    # rw_copy.resize((bigger_x*bigger_y))
-    # sw_copy.resize((bigger_x*bigger_y))
-    # rw_copy.reshape((bigger_x,bigger_y))
-    # sw_copy.reshape((bigger_x,bigger_y))
-    # # test1 = np.resize(rw_copy,(bigger_x,bigger_y))
-    # # test2 = np.resize(sw_copy,(bigger_x,bigger_y))
-    
-    # final_im = np.vstack((rw_copy,sw_copy))
-    # # final_im = np.vstack((test1,test2))
-    # cv.imshow('final',final_im)
-    # cv.waitKey(0)
-    # cv.imshow('cropped rank',rw_copy)
-    # cv.waitKey(0)
-    # cv.imshow('cropped suit',test1)
-    # cv.waitKey(0)
-    
-    # draw_suit = np.zeros_like(im)
-    # draw_rank = np.zeros_like(im)
-    # draw_min_suit = np.zeros_like(im)
-    # draw_min_rank = np.zeros_like(im)
-    
-    # cv.drawContours(draw_suit, suit, -1, (255,255,0),3)
-    # cv.imshow('working',draw_suit)
-    # cv.waitKey(0)
-
-    # cv.drawContours(draw_min_suit,suit_boxes,0,(255,135,0),2)
-    # cv.imshow('working',draw_min_suit)
-    # cv.waitKey(0)
-
-    # cv.drawContours(draw_rank, rank, -1, (255,255,0),3)
-    # cv.imshow('working',draw_rank)
-    # cv.waitKey(0)
-
-    # cv.drawContours(draw_min_rank,rank_boxes,0,(255,135,0),2)
-    # cv.imshow('working',draw_min_rank)
-    # cv.waitKey(0)
-
-    # cv.imshow('working',rank_box_drawing)
-    # cv.waitKey(0)
     
 if __name__=='__main__':
     find_card()
