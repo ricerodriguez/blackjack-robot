@@ -1,6 +1,9 @@
 import cv2 as cv
 import numpy as np
 # from picamera import PiCamera
+def sort_by_dist(contours):
+    for cont in contours:
+        print(cont)
 
 def prep(im, mode=True, window='working'):
       # Convert to gray and blur it
@@ -30,6 +33,7 @@ def prep(im, mode=True, window='working'):
     cont_sort = sorted(contours,key=cv.contourArea,reverse=True)[:2]
     # print('size: ',(cont_sort[i].size for i in cont_sort))
     print(len(contours))
+    sort_by_dist(contours)
     for i,cont in enumerate(cont_sort):
         print('size {}: '.format(i),cont.size)
 
