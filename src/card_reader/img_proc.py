@@ -1,42 +1,83 @@
 import cv2 as cv
-import sys, numpy, pytesseract
-from PIL import Image
-from picamera import PiCamera
+import numpy as np
+import sys
 
-cam = PiCamera()
+cam = cv.VideoCapture(0)
 
 class ImageProcessor:
-    def __init__(self, img1, img2):
-        # self.path = pathname
-        cam.capture('images/card.jpg')
-        self.img = cv.imread(cv.samples.findFile(img1))
-        self.img2 = cv.imread(cv.samples.findFile(img2))
-        # Exit if can't find source file
-        if self.img is None:
-            print('ERROR: CANNOT FIND FILE ' + str(img1))
-            exit(0)
-        # Do the rest
-        self.diff_pics()
+    def __init__(self, im, test=False):
+        self.im = im
+        self.test = test
 
-    def diff_pics(self):
-        img1 = self.threshold_img(self.img)
-        img2 = self.threshold_img(self.img2)
-        diff = cv.absdiff(img1,img2)
-        diff = cv.GaussianBlur(diff,(3,3),5)
-        flag, diff = cv.threshold(diff,200,255,cv.THRESH_BINARY)
-        print(numpy.sum(diff))
-        print(pytesseract.image_to_string(Image.fromarray(img2)))
-        cv.imshow('image1',img1)
-        cv.imshow('image2',img2)
-        cv.imshow('diff',diff)
-        cv.waitKey(0)
-        cv.destroyAllWindows
+    def prep(self,im=self.im):
+        gray = cv.cvtColor(im, cv.COLOR_BGR2GRAY)
+        blur = cv.GaussianBlur(gray,(0,0),2)
 
-    def threshold_img(self,img):
-        gray = cv.cvtColor(img,cv.COLOR_BGR2GRAY)
-        blur = cv.GaussianBlur(gray,(7,7),2)
+        # Adaptive thresholding
         thresh = cv.adaptiveThreshold(blur,255,1,1,11,1)
-        return thresh
 
-if __name__ == "__main__":
-    ImageProcessor(sys.argv[1], sys.argv[2])
+        # Kernel for erosion, dilation
+        kernel = np.ones((5,5),np.uint8)
+        # Erosion
+        ero = cv.erode(thresh,kernel,iterations=1)
+        # Dilation
+        dil = cv.dilate(ero,kernel,iterations=1)
+        # Canny edge detection
+        edges = cv.Canny(dil,0,255)
+        # Masking algorithm from one of the tutorials on OpenCV
+        mask = edges != 0
+        dst = im * (mask[:,:,None].astype(im.dtype))
+
+        return gray, blur, thresh, ero, dil, edges, dst
+
+    def __sort_cont_area(self,contours,length=5):
+        cont_sort = sorted(contours,key=cv.contourArea,reverse=True)[:length]
+        self.comp = cont_sort[-1]
+        return cont_sort
+
+    def __sort_cont_dist(self,contours):
+        comp = self.comp
+        M = cv.moments(contours)
+        x = M['m10']/M['m00']
+        y = M['m01']/M['m00']
+        center_this = [x,y]
+
+        M_comp = cv.moments(comp)
+        x_comp = M_comp['m10']/M_comp['m00']
+        y_comp = M_comp['m01']/M_comp['m00']
+        center_comp = [x_comp,y_comp]
+        
+        dx = center_this[0] - center_comp[0]
+        dy = center_this[1] - center_comp[1]
+        D = np.sqrt(dx*dx+dy*dy)
+        return D
+
+    def isolate_rank_suit(self,contours):
+        cont_sort_area = self.__sort_cont_area(contours)
+        cont_sort_dist = sorted(cont_sort_area,key=self.__sort_cont_dist,reverse=True)
+        return cont_sort_dist[-2:]
+
+
+
+
+if __name__=='__main__':
+    test = False
+    if (len(sys.argv) == 2):
+        if ('-t' in sys.argv[1]):
+            test = True
+    else:
+        test = False
+    _, im = cam.read()
+    ch = ImageProcessor(test,im)
+    gray, blur, thresh, ero, dil, edges, masked = ch.prep(im)
+    _, contours, _ = cv.findContours(edges,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE)
+    disp = ch.isolate_rank_suit(contours)
+    draw = np.zeros_like(im)
+    cv.drawContours(draw,disp,-1,(255,255,0),2)
+    cv.waitKey(0)
+    # cont_sort_area = ch.sort_cont_area(contours)
+    # cont_sort_dist = ch.sort_cont_dist(cont_sort_area)
+    
+    
+
+
