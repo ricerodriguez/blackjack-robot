@@ -25,10 +25,10 @@ class djackGUI:
         
         # Welcome image
         app.addLabel('logo','djack',0,0,2)
-        app.getLabelWidget('logo').config(font='Modern\ Sans 62')
+        app.getLabelWidget('logo').config(font='Quicksand\ Book 62')
         
         # Add scale to set number of players
-        app.setFont(size=16,family='URW Gothic')        
+        app.setFont(size=16,family='CaviarDreams')        
         app.addLabel('nump_txt','How many players are participating in this game?',1,0,4)
 
         # Update the row and change the scale settings
@@ -150,6 +150,7 @@ class djackGUI:
         self.started = True
         app.destroySubWindow('New Game')
         app.show()
+        self.num = num
         self.table_layout(num)
 
     # MAIN FUNCTION
@@ -203,7 +204,24 @@ class djackGUI:
             app.reloadImageData('{} Hand'.format(self.players[i]),im,fmt='PhotoImage')
             r += 1
             app.addNamedButton('Hit me!','{} hit'.format(self.players[i]),self.hit,row=r,column=i)
-            
+            r += 1
+            app.addNamedButton('Rematch?','{} rematch'.format(self.players[i]),self.rematch,row=r,column=i)
+            app.hideButton('{} rematch'.format(self.players[i]))
+
+    def rematch(self,cmd):
+        name = cmd.replace(' rematch','')
+        player = self.players_ref.get(name)
+        player.rematch(name)
+        im = Image.open('{}_hand.png'.format(name))
+        im.convert('RGBA')
+        im = ImageTk.PhotoImage(im)
+        app.reloadImageData('{} Hand'.format(name),im,fmt='PhotoImage')
+        label = '{0}\nScore: {1}'.format(name,player.score)
+        app.setLabel('{}'.format(name),label)
+        app.enableButton('{} hit'.format(name))
+        app.hideButton('{} rematch'.format(name))
+        
+        # self.table_layout(self.num)
 
     def hit(self,cmd):
         name = cmd.replace(' hit','')
@@ -220,6 +238,7 @@ class djackGUI:
         if player.busted():
             app.setLabel('{}'.format(name), '{}\nBUSTED'.format(name))
             app.disableButton('{} hit'.format(name))
+            app.showButton('{} rematch'.format(name))
 
 if __name__=='__main__':
     dj = djackGUI()

@@ -9,25 +9,33 @@ class ImageProcessor:
         self.im = im
         self.test = test
 
-    def prep(self,im=self.im):
+    def prep(self,im):
+        t = self.test
         gray = cv.cvtColor(im, cv.COLOR_BGR2GRAY)
         blur = cv.GaussianBlur(gray,(0,0),2)
 
         # Adaptive thresholding
         thresh = cv.adaptiveThreshold(blur,255,1,1,11,1)
-
+        if t:
+            cv.imshow('thresh',thresh)
+            cv.waitKey(0)
         # Kernel for erosion, dilation
         kernel = np.ones((5,5),np.uint8)
         # Erosion
         ero = cv.erode(thresh,kernel,iterations=1)
         # Dilation
         dil = cv.dilate(ero,kernel,iterations=1)
+        if t:
+            cv.imshow('dil',dil)
+            cv.waitKey(0)
         # Canny edge detection
         edges = cv.Canny(dil,0,255)
         # Masking algorithm from one of the tutorials on OpenCV
         mask = edges != 0
         dst = im * (mask[:,:,None].astype(im.dtype))
-
+        if t:
+            cv.imshow('masked',dst)
+            cv.waitKey(0)
         return gray, blur, thresh, ero, dil, edges, dst
 
     def __sort_cont_area(self,contours,length=5):
@@ -53,12 +61,15 @@ class ImageProcessor:
         return D
 
     def isolate_rank_suit(self,contours):
-        cont_sort_area = self.__sort_cont_area(contours)
-        cont_sort_dist = sorted(cont_sort_area,key=self.__sort_cont_dist,reverse=True)
+        found = False
+        while not found:
+            cont_sort_area = self.__sort_cont_area(contours,4)
+            cont_sort_dist = sorted(cont_sort_area,key=self.__sort_cont_dist)
+            match = cv.matchShapes(cont_sort_dist[-1],cont_sort_dist[-2],cv.CONTOURS_MATCH_I1,420.69)
+            print('match: ',match)
+            found = True
+
         return cont_sort_dist[-2:]
-
-
-
 
 if __name__=='__main__':
     test = False
@@ -68,15 +79,22 @@ if __name__=='__main__':
     else:
         test = False
     _, im = cam.read()
-    ch = ImageProcessor(test,im)
-    gray, blur, thresh, ero, dil, edges, masked = ch.prep(im)
+    if test:
+        cv.imshow('test',im)
+        cv.waitKey(0)
+    ch = ImageProcessor(im,test)
+    # gray, blur, thresh, ero, dil, edges, masked = ch.prep(im)
+    ranksuit = im[315:415,280:450]
+    gray, blur, thresh, ero, dil, edges, masked = ch.prep(ranksuit)
     _, contours, _ = cv.findContours(edges,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE)
-    disp = ch.isolate_rank_suit(contours)
-    draw = np.zeros_like(im)
+    # disp = ch.isolate_rank_suit(contours)
+    disp = sorted(contours,key=cv.contourArea,reverse=True)[:2]
+
+    
+    draw = np.zeros_like(ranksuit)
     cv.drawContours(draw,disp,-1,(255,255,0),2)
+    cv.imshow('test',draw)
     cv.waitKey(0)
-    # cont_sort_area = ch.sort_cont_area(contours)
-    # cont_sort_dist = ch.sort_cont_dist(cont_sort_area)
     
     
 

@@ -203,10 +203,28 @@ class Player:
         self.name = name
         self.payout = payout
         self.bet = bet
-        self.score = 0
         self.deck = deck
+        self.rematch(name)
+        # self.score = 0
+        # self.num_cards = 0
+        # self.aces = 0
+
+        # # Deal initial cards
+        # draw = random.randint(0,51)
+        # self.update_score(draw)
+        # self.discard_pile.append(draw)
+        # card = GENERAL_DECK[draw]
+
+        # self.hand = PlayerHand(card,name)
+        # self.num_cards += 1
+    
+        # self.hit()
+
+    def rematch(self,name=None):            
+        self.score = 0
         self.num_cards = 0
-        self.has_ace = False
+        self.aces = 0
+        self.temp_score = 0
 
         # Deal initial cards
         draw = random.randint(0,51)
@@ -214,10 +232,17 @@ class Player:
         self.discard_pile.append(draw)
         card = GENERAL_DECK[draw]
 
-        self.hand = PlayerHand(card,name)
+        try:
+            del self.hand
+        except AttributeError:
+            pass
+        finally:
+            self.hand = PlayerHand(card,name)
+
         self.num_cards += 1
     
         self.hit()
+        
 
     def in_deck(self,draw):
         for card in self.discard_pile:
@@ -229,10 +254,25 @@ class Player:
         return True
 
     def busted(self):
-        if (self.score > 21):
-            return True
+        if self.aces <= 0:
+            if (self.score > 21):
+                return True
+            else:
+                return False
         else:
-            return False
+            max_score = self.aces * 10 + self.score
+            min_score = self.aces + self.score
+            all_scores = []
+            for i in range(self.aces):
+                tmp = self.score + i*10 + (self.aces - 1)
+                if ((tmp > 21) and (prev is None)):
+                    return True
+                elif (tmp <= 21):
+                    prev = tmp
+                    continue
+                else:
+                    self.score = tmp
+                    return False
         
     def hit(self):
         draw = random.randint(0,51)
@@ -251,8 +291,49 @@ class Player:
         if (draw > 47):
             if (self.score + 10 < 21):
                 self.score += 10
-                self.has_ace = True
+                self.aces += 1
             else:
                 self.score += 1
+                self.aces += 1
+        #     all_scores = []
+        #     print('aces: ',self.aces)
+        #     if self.aces > 0:
+        #         for i in range(self.aces):
+        #             i+=1
+        #             tens = abs(range(self.aces) - i)
+        #             tmpscore = self.score + i + 10*tens
+        #             if (tmpscore > 21):
+        #                 print(tmpscore)
+        #                 continue
+        #             else:
+        #                 print(tmpscore)
+        #                 all_scores.append(tmpscore)
+        #         self.score = max(all_scores)
+        #         self.aces += 1
+        #     else:
+                
+                
+                    
+            
+                
+        #     # for i in range(self.aces):
+        #     #     tmp = self.score + i*10 + (self.aces - 1)
+        #     #     if ((tmp > 21) and (prev is None)):
+        #     #         self.score += 1
+        #     #     elif (tmp <= 21):
+        #     #         prev = tmp
+        #     #         continue
+        #     #     else:
+        #     #         self.score = tmp                    
+            
         else:
             self.score += CARD_VALUES[draw]
+            # for i in range(self.aces):
+            #     tmp = self.score + i*10 + (self.aces - 1)
+            #     if ((tmp > 21) and (prev is None)):
+            #         self.score += 1
+            #     elif (tmp <= 21):
+            #         prev = tmp
+            #         continue
+            #     else:
+            #         self.score = tmp                 
