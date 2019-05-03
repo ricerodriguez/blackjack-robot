@@ -220,8 +220,6 @@ class djackGUI:
         app.setLabel('{}'.format(name),label)
         app.enableButton('{} hit'.format(name))
         app.hideButton('{} rematch'.format(name))
-        
-        # self.table_layout(self.num)
 
     def hit(self,cmd):
         name = cmd.replace(' hit','')
