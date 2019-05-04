@@ -136,6 +136,8 @@ class ImageProcessor(threading.Thread):
     def __init__(self,cls,trigger):
         self.kaleb = cls
         self.snapped = trigger
+        # Initialize the superclass
+        threading.Thread.__init__(self)
         self.progress = 0
 
     def run(self):
@@ -178,6 +180,8 @@ class ImageProcessor(threading.Thread):
 class PCBListener(threading.Thread):
     def __init__(self,cls):
         self.kaleb = cls
+        # Initialize the superclass
+        threading.Thread.__init__(self)
         # GPIO.output(P0, False)
         # GPIO.output(P1, True)        
 
@@ -196,6 +200,8 @@ class PCBListener(threading.Thread):
 class PCBTalker(threading.Thread):
     def __init__(self,trigger):
         self.snapped = trigger
+        # Initialize the superclass
+        threading.Thread.__init__(self)
 
     def run(self):
         while True:
@@ -207,6 +213,8 @@ class PCBTalker(threading.Thread):
 class LuckyCharms(threading.Thread):
     def __init__(self):
         self.cereal = Serial()
+        # Initialize the superclass
+        threading.Thread.__init__(self)
 
     def run(self):
         while True:
@@ -238,7 +246,7 @@ class CardReader:
         kaleb.start()
 
         # Thread will process the images Kaleb took when the snapped event triggers it
-        preppy = ImageProcessor(insta,snapped)
+        preppy = ImageProcessor(kaleb,snapped)
         preppy.start()
 
         # Thread will constantly poll the pins of the Pi for input and trigger the ready flag when it receives input, signifying that a new card has been pushed out

@@ -2,13 +2,61 @@ import cv2 as cv
 import numpy as np
 import sys
 import os
-
-# cam = cv.VideoCapture(0)
+from array import array
+cam = cv.VideoCapture(0)
 
 class ImageProcessor:
-    def __init__(self, im, test=False):
+    def __init__(self, im, test=False, imcont_sort=None):
         self.im = im
         self.test = test
+        self.imcont_sort = imcont_sort
+        self.train = [0] * 52
+        self.matches = []
+        path = os.path.dirname(__file__)
+        im_path = os.path.join(path, 'images')
+        for file in os.listdir(im_path):
+            if file.endswith('.png'):
+                filename = 'images/{}'.format(file)
+                test = cv.imread(filename)
+                # print(test)
+                _,_,_,_,edges = self.real_prep(test)
+                _, contours, _ = cv.findContours(edges,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE)
+                # if contours in self.train:
+                #     print('wow a real duplicate')
+
+                code = str(filename).lstrip('images/')
+                code = code.rstrip('.png')
+                i = int(code)
+                print('index: ',i)
+                try:
+                    self.train[i] = contours
+                except:
+                    break
+        # print(self.train)
+
+    def find_index(self):
+        matches = []
+        for match in self.matches:
+            for i,car in enumerate(self.train):
+                try:
+                    if np.array_equal(car,match):
+                        matches.append(i)
+                    else:
+                        continue
+                except:
+                    pass
+        return matches
+                
+        # for i,car in enumerate(self.train):
+        #     try:
+        #         if np.array_equal(car,matches[i]):
+        #             return i
+        #         else:
+        #             continue
+
+        #     except:
+        #         pass
+                
 
     def find_rot_box(self,contours):
         rects = []
@@ -45,10 +93,10 @@ class ImageProcessor:
         rect_s = rects[-2]
         box_r = cv.boxPoints(rect_r)
         box_r = np.int0(box_r)
-        print(box_r)
+        # print(box_r)
         box_s = cv.boxPoints(rect_s)
         box_s = np.int0(box_s)
-        print(box_s)
+        # print(box_s)
         # box = [[min(box_s[0][0],box_s[1][0]),max(box_s[0][1],box_s[1][1])],
         #        box_s[1],
         #       [max(box_s[2][0],box_s[3][0]),box_s[2][1]],
@@ -109,30 +157,50 @@ class ImageProcessor:
 
         return gray, blur, ero, dil, edges
 
-    def match_card(self,im):
+    def match_card(self,imconts,imcont_sort=None):
         path = os.path.dirname(__file__)
         im_path = os.path.join(path, 'images')
         matches = {}
         for file in os.listdir(im_path):
             if file.endswith('.png'):
-                # print(file)
+                print(file)
                 test = cv.imread('images/{}'.format(file))
                 # print(test)
                 _,_,_,_,edges0 = self.real_prep(test)
-                _,_,_,_,edges1 = self.real_prep(im)
                 _, contours0, _ = cv.findContours(edges0,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE)
-                _, contours1, _ = cv.findContours(edges1,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE)
                 cont_sort0 = sorted(contours0,key=cv.contourArea,reverse=True)
-                cont_sort1 = sorted(contours1,key=cv.contourArea,reverse=True)
-
-                # boxes0, rects0 = self.find_rot_box(contours0)
-                # boxes1, rects1 = self.find_rot_box(contours1)
-
-                # cropped0 = self.crop_to_area(im)
+                if imcont_sort is None:
+                    imcont_sort = sorted(imconts,key=cv.contourArea,reverse=True)
                 
+                match = cv.matchShapes(cont_sort0[-1],imcont_sort[-1],cv.CONTOURS_MATCH_I2,420.69)
+                print(match)
 
-                # match = cv.matchShapes(cont_sort0[-1],cont_sort1[-1],cv.CONTOURS_MATCH_I1,1.0)
-                # print(match)
+    def match_sort(self,traincar):
+        try:
+            train_sort = sorted(traincar, key=cv.contourArea,reverse=True)[:2]
+            match = cv.matchShapes(self.imcont_sort[-1],train_sort[-1],cv.CONTOURS_MATCH_I1,420.69)
+            return match
+        except:
+            return 0
+        # if filename.endswith('.png'):
+        #     test = cv.imread('images/{}'.format(filename))
+        # else:
+        #     return 0
+        # # print('images/{}'.format(filename))
+        # _,_,_,_,edges  = self.real_prep(test)
+        # _, contours , _ = cv.findContours(edges ,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE)
+        # cont_sort = sorted(contours ,key=cv.contourArea,reverse=True)
+        # # blah = np.zeros_like(test)
+        # # cv.drawContours(blah,cont_sort,-1,(255,255,0),2)
+        # # cv.imshow('teeeeest',blah)
+        # # cv.waitKey(0)
+        # # self.imcont_sort = sorted(imconts,key=cv.contourArea,reverse=True)
+
+        # match1 = cv.matchShapes(cont_sort [-1],self.imcont_sort[-1],cv.CONTOURS_MATCH_I1,420.69)
+        # match2 = cv.matchShapes(cont_sort [-2],self.imcont_sort[-2],cv.CONTOURS_MATCH_I1,420.69)
+
+        # return (match1+match2)/2
+        
 
     def prep(self,im):
         t = self.test
@@ -244,16 +312,48 @@ if __name__=='__main__':
     
     # thresh2 = cv.adaptiveThreshold(gray2,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C,cv.THRESH_BINARY_INV,5,1)
 
-    cv.imshow('cropped',cropped)
+    cv.imshow('contours',draw)
+    cv.waitKey(0)
+    cv.imshow('rank suit',ranksuit)
     cv.waitKey(0)
 
     if (len(sys.argv) >= 2):
         if not ('-m' in sys.argv[1] or '-t' in sys.argv[1]):
-            cv.imwrite(sys.argv[1],cropped)
+            cv.imwrite(sys.argv[1],ranksuit)
         else:
+            _, contours2, _ = cv.findContours(cropped,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE)
+            disp2 = sorted(contours2,key=cv.contourArea,reverse=True)[:2]
+
+
             draw2 = np.zeros_like(ranksuit)
-            cv.drawContours(draw2,contours,-1,(255,255,0),2)
-            ch.match_card(draw2)
-        
+            cv.drawContours(draw2,disp2,-1,(255,255,0),2)
+            cv.imshow('test',draw2)
+            cv.waitKey(0)
+            # ch.match_card(contours2,disp2)
+            # path = os.path.dirname(__file__)
+            # im_path = os.path.join(path, 'images')
+
+            # files = os.listdir(im_path)
+            # # print(files)
+            ch.imcont_sort = disp2
+            # arr = 
+            # print(ch.train.index(max(ch.train,key=ch.match_sort)))
+            matches = sorted(ch.train,key=ch.match_sort,reverse=True)
+            print('outer layer: ',len(matches))
+            print('inner layer: ',len(matches[0]))
+            print('innermost layer: ',len(matches[0][0]))
+            print('more inner layer: ',len(matches[0][0][0]))
+            print(matches[0])
+            ch.matches = matches
+            print(ch.find_index())
+            # print(matches[0][0].shape)
+            # print(ch.train[0].index(matches[0]))
+
+            # matches_np = np.array(matches)
+            # train_np = np.array(ch.train)
+            # print(ch.train.index([matches[0]]))
+            # for i in range(len(matches)):
+            #     thing = ch.train.index(matches[i][0])
+            #     print(thing)
 
 
