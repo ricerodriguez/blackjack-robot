@@ -233,6 +233,9 @@ class LuckyCharms(threading.Thread):
                 elif (cmd == 'stay'):
                     GPIO.output(P0, True)
                     GPIO.output(P1, False)
+                else:
+                    GPIO.output(P0, False)
+                    GPIO.output(P1, False)
                 
             except serialutil.SerialException:
                 logging.warning('CONNECTION FAILED, TRYING AGAIN')
@@ -259,8 +262,6 @@ class CardReader:
 
         kelloggs = LuckyCharms()
         kelloggs.start()
-
-        
         
 if __name__=='__main__':
     cr = CardReader()
