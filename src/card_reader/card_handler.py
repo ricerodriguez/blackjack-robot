@@ -6,16 +6,14 @@ import time
 import logging
 # import sys
 
+cam = cv.VideoCapture(0)
 
 # Local package definition for card macros
 import CARD_DEFS
 
 # Image and camera package imports
-from PIL import Image
-from picamera import PiCamera
 
 # Global variables for things that will be used throughout
-cam = PiCamera()
 GEN_DECK = CARD_DEFS.GENERAL_DECK
 
 #logging.basicConfig(filename=os.path.join(str(os.path.dirname(__file__)), 'log', 'calibrator.log'), level=logging.INFO)
@@ -25,6 +23,7 @@ class Calibrator(threading.Thread):
         self.path = path
         self.deck = deck
         self._card_map = {}
+        self.progress = 0
         self._init_path(path, deck)
 
         # Initialize the superclass
@@ -42,6 +41,8 @@ class Calibrator(threading.Thread):
         # the Pi to take a picture of.
         self.ready = threading.Event()
         self.ready.set()
+
+        # Thread event indicates that the calibration image processing has finished
         
     # Initialize the card map, which maps the card name to the
     # pathname of the image taken of the card
@@ -92,62 +93,89 @@ class Calibrator(threading.Thread):
             card_name = card_name + '.png'
             
             # Join the path created earlier with the card_name
-            filename = os.path.join(self.path, card_name)
+            self.filename = os.path.join(self.path, card_name)
             
             # Snap the picture
-            cam.capture(filename)
+            _, self.im = cam.read()
+            cv.imwrite(self.filename,self.im)
             
             # Add the file name to the map to keep track
-            self._card_map[card] = filename
+            self._card_map[card] = self.filename
             # Set the flag that the picture has been taken
             self.snapped.set()
             logging.info('CL: Set snapped event!')
+            self.progress += 1
 
-        # Exited the for-loop, so all cards have been snapped.
-        self.img_prep()
+        # # Exited the for-loop, so all cards have been snapped.
+        # card_imgs = os.listdir(self.path)
+        # for img in card_imgs:
+        #     self.img_prep()
 
+class CardPhotographer(threading.Thread):
+    def __init__(self,trigger):
+        self.snapped = trigger
+        self.progress = 0
+        threading.Thread.__init__(self)
+        self.ready = threading.Event()
+        self.ready.set()
+
+    def run(self):
+        self.snapped.clear()
+        self.ready.wait()
+
+        while not self.ready.is_set():
+            self.ready.wait()
+            
+        self.ready.clear()
+        _, self.im = cam.read()
+        cv.imwrite('card.jpg',self.im)
+        self.progress += 1
+        self.snapped.set()
         
-    def img_prep(self):
-        # For each card in the folder
-        card_imgs = os.listdir(self.path)
+class ImageProcessor(threading.Thread):
+    def __init__(self,cls,trigger):
+        self.kaleb = cls
+        self.snapped = trigger
+        self.progress = 0
+
+    def run(self):
         # Credit to OpenCV's tutorial: 'Creating Bounding boxes and
         # circles for contours'
-
-        for img in card_imgs:
-            # Read in the card
-            card = cv.imread(img)
-            # Use Canny algorithm to find edges
-            can_out = cv.Canny(card, 100, 200)
-            # Convert to gray and blur it
-            card_g = cv.cvtColor(card, cv.COLOR_BGR2GRAY)
-            card_g = cv.blur(card, (3,3))
-            # Find contours, save them to vector
-            contours, _ = cv.findContours(can_out, cv.RETR_TREE,
-                                          cv.CHAIN_APPROX_SIMPLE)
-            # Approximate contours to polygons + get bounding
-            # rects/circles
-            cont_poly = [None]*len(contours)
-            bound_box = [None]*len(contours)
-
-            # For each of the contours found, approximate a polygon
-            # from the contour, then draw a bounding box for that
-            # polygon            
-            for i,c in enumerate(contours):
-                cont_poly[i] = cv.approxPolyDP(c,3,True)
-                bound_box[i] = cv.boundingRect(cont_poly[i])
-
-            # Find the biggest bounding box
-            areas = []
-            for box in bound_box:
-                areas.append(box[2]*box[3])
-                
-            big_box = bound_box.index(max(bound_box))
-
-            x, y, w, h = big_box
-            roi = card[y:y+h, x:x+w]
-            cv.imwrite(img, roi)
-            
-        
+        # # Read in the card
+        # card = cv.imread(img)
+        # Convert to gray and blur it
+        while True:
+            logging.info('IMAGE PROCESSOR: Waiting for Pi to finish snapping!')
+            self.snapped.wait()
+            if self.snapped.is_set():
+                im_full = self.kaleb.im
+                im = im_full[315:415,280:450]
+                self.progress += 1
+                gray = cv.cvtColor(im, cv.COLOR_BGR2GRAY)
+                blur = cv.blur(im, (3,3))
+                # Adaptive thresholding
+                thresh = cv.adaptiveThreshold(blur,255,1,1,11,1)
+                self.progress += 1
+                # Kernel for erosion, dilation
+                kernel = np.ones((5,5),np.uint8)
+                # Erosion
+                ero = cv.erode(thresh,kernel,iterations=1)
+                # Dilation
+                dil = cv.dilate(ero,kernel,iterations=1)
+                self.progress += 1
+                # Canny edge detection
+                edges = cv.Canny(dil,0,255)
+                # Masking algorithm from one of the tutorials on OpenCV
+                mask = edges != 0
+                dst = im * (mask[:,:,None].astype(im.dtype))
+                self.progress += 1
+                _, contours, _ = cv.findContours(edges,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE)
+                disp = sorted(contours,key=cv.contourArea,reverse=True)[:2]
+                self.progress += 1
+                draw = np.zeros_like(ranksuit)
+                cv.drawContours(draw,disp,-1,(255,255,0),2)
+                cv.imwrite(self.kaleb.filename,draw)
+                self.progress += 1
          
 class Tester(threading.Thread):
     def __init__(self, cls, trigger):
@@ -169,13 +197,25 @@ class Tester(threading.Thread):
             logging.info('TESTER: EXITED IF')
 
 class CardReader:
-    def __init__(self, path=None, deck=None):
-        snapped = threading.Event()
-        kaleb = Calibrator(snapped, path, deck)
-        kaleb.start()
-        
-        thr = Tester(kaleb, snapped)
-        thr.start()
+    def __init__(self, calibrate=False, path=None, deck=None):
+        if calibrate:
+            snapped = threading.Event()
+            kaleb = Calibrator(snapped, path, deck)
+            kaleb.start()
+
+            preppy = ImageProcessor(kaleb,snapped)
+            preppy.start()
+
+            thr = Tester(kaleb, snapped)
+            thr.start()
+
+        else:
+            snapped = threading.Event()
+            insta = CardPhotographer(snapped)
+            preppy = ImageProcessor(insta,snapped)
+            preppy.start()
+            
+
         
 if __name__=='__main__':
     cr = CardReader()
