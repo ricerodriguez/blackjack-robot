@@ -3,7 +3,7 @@ import numpy as np
 import sys
 import os
 
-cam = cv.VideoCapture(0)
+# cam = cv.VideoCapture(0)
 
 class ImageProcessor:
     def __init__(self, im, test=False):
@@ -21,23 +21,66 @@ class ImageProcessor:
             box = np.int0(box)
             rects.append(rect)
             boxes.append(box)
-        return boxes, rects        
+        return boxes, rects
 
+    def min_xy(self,points,i):
+        minxy = points[0]
+        for x in points:
+            if x[i] < minxy[i]:
+                minxy = x
+
+        return minxy
+
+    def max_xy(self,points,i):
+        maxxy = points[0]
+        for x in points:
+            if x[i] > maxxy[i]:
+                maxxy = x
+
+        return maxxy
+
+    
     def crop_to_area(self,im,rects):
         rect_r = rects[-1]
         rect_s = rects[-2]
-        width = int(rect_r[1][0]+rect_s[1][0])
-        height = int(rect_r[1][1])
         box_r = cv.boxPoints(rect_r)
         box_r = np.int0(box_r)
         print(box_r)
         box_s = cv.boxPoints(rect_s)
         box_s = np.int0(box_s)
         print(box_s)
-        box = [box_s[0],box_s[1],
-               [max(box_s[2][0],box_r[3][0]),box_s[2][1]],
-               [box_r[3][0],max(box_r[3][1],box_s[3][1])]]
+        # box = [[min(box_s[0][0],box_s[1][0]),max(box_s[0][1],box_s[1][1])],
+        #        box_s[1],
+        #       [max(box_s[2][0],box_s[3][0]),box_s[2][1]],
+        #       [box_r[3][0],max(box_r[3][1],box_s[3][1])]]
+        points = np.concatenate((box_s, box_r))
+        # print(self.max_xy(points,0))
+        points = sorted(points,key=lambda x:x[0])
+        points_l = points[:2]
+        points_r = points[-2:]
+        bl = self.max_xy(points_l,1)
+        tl = self.min_xy(points_l,1)
+
+        br = self.max_xy(points_r,1)
+        tr = self.min_xy(points_r,1)
+        if (abs(br[0] - tr[0]) >= 15):
+            newx = max(br[0],tr[0])
+            br[0] = newx
+            tr[0] = newx
+
+        if (abs(tl[1] - tr[1]) >= 15):
+            newy = min(tl[1],tr[1])
+            tl[1] = newy
+            tr[1] = newy
+            
+        box = [bl,tl,tr,br]
+        # print(points,bl)
+        # box = [self.maxxy(box_s+box_r, 0)
         box = np.int0(box)
+        # width = int(rect_r[1][0]+rect_s[1][0])
+        # height = int(rect_r[1][1])
+        width = int(abs(br[0]-bl[0]))
+        height = int(abs(tr[1]-br[1]))
         print(box)
         src = box.astype('float32')
         dst = np.array([[0, height-1],
@@ -126,6 +169,7 @@ class ImageProcessor:
         canvas = np.zeros_like(dil)
         cv.drawContours(canvas,cont_sort,-1,(255,255,0),2)
         boxes, rects = self.find_rot_box(cont_sort)
+        print(rects[-1])
         final_im = np.zeros_like(dil)
         cv.drawContours(final_im,contours,-1,(255,255,0),2)
         cropped = self.crop_to_area(final_im,rects)
@@ -181,7 +225,8 @@ if __name__=='__main__':
             test = True
     else:
         test = False
-    _, im = cam.read()
+    # _, im = cam.read()
+    im = cv.imread('test.jpg')
     if test:
         cv.imshow('test',im)
         cv.waitKey(0)
