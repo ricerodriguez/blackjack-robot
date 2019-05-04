@@ -4,9 +4,14 @@ import threading
 import os
 import time
 import logging
-# import sys
+import RPi.GPIO as GPIO
+from serial import Serial, serialutil
+from time import sleep
 
+# Global variables for camera and pin values
 cam = cv.VideoCapture(0)
+P0 = 10
+P1 = 11
 
 # Local package definition for card macros
 import CARD_DEFS
@@ -106,11 +111,6 @@ class Calibrator(threading.Thread):
             logging.info('CL: Set snapped event!')
             self.progress += 1
 
-        # # Exited the for-loop, so all cards have been snapped.
-        # card_imgs = os.listdir(self.path)
-        # for img in card_imgs:
-        #     self.img_prep()
-
 class CardPhotographer(threading.Thread):
     def __init__(self,trigger):
         self.snapped = trigger
@@ -141,8 +141,6 @@ class ImageProcessor(threading.Thread):
     def run(self):
         # Credit to OpenCV's tutorial: 'Creating Bounding boxes and
         # circles for contours'
-        # # Read in the card
-        # card = cv.imread(img)
         # Convert to gray and blur it
         while True:
             logging.info('IMAGE PROCESSOR: Waiting for Pi to finish snapping!')
@@ -177,45 +175,84 @@ class ImageProcessor(threading.Thread):
                 cv.imwrite(self.kaleb.filename,draw)
                 self.progress += 1
          
-class Tester(threading.Thread):
-    def __init__(self, cls, trigger):
-        threading.Thread.__init__(self)
+class PCBListener(threading.Thread):
+    def __init__(self,cls):
         self.kaleb = cls
-        self.snapped = trigger
-        
+        # GPIO.output(P0, False)
+        # GPIO.output(P1, True)        
+
     def run(self):
         while True:
-            logging.info('TESTER: Waiting for Pi to finish snapping!')
+            if (GPIO.input(trigPin)):
+                self.kaleb.ready.set()
+                GPIO.output(P0, False)
+                GPIO.output(P1, False)
+
+            else:
+                GPIO.output(P0, False)
+                GPIO.output(P1, True)
+
+
+class PCBTalker(threading.Thread):
+    def __init__(self,trigger):
+        self.snapped = trigger
+
+    def run(self):
+        while True:
             self.snapped.wait()
             if self.snapped.is_set():
-                logging.info('TESTER: It\'s done! Clearing out ready flag...')            
-                self.kaleb.ready.clear()
-                logging.info('TESTER: Cleared out the ready flag.')
-                time.sleep(1)
-                self.kaleb.ready.set()
-                logging.info('TESTER: Set ready!')
-            logging.info('TESTER: EXITED IF')
+                GPIO.output(P0, True)
+                GPIO.output(P1, True)
 
+class LuckyCharms(threading.Thread):
+    def __init__(self):
+        self.cereal = Serial()
+
+    def run(self):
+        while True:
+            try:
+                self.cereal = Serial('dev/ttyUSB0',timeout=1)
+                logging.info('SUCCESSFULLY CONNECTED')
+                # Connected, now listening for what to do
+                cmd_raw = self.cereal.readline()
+                cmd = str(cmd_raw)
+                if (cmd == 'hit'):
+                    GPIO.output(P0, False)
+                    GPIO.output(P1, True)
+                elif (cmd == 'double'):
+                    GPIO.output(P0, False)
+                    GPIO.output(P1, False)
+                elif (cmd == 'stay'):
+                    GPIO.output(P0, True)
+                    GPIO.output(P1, False)
+                
+            except serialutil.SerialException:
+                logging.warning('CONNECTION FAILED, TRYING AGAIN')
+                
 class CardReader:
     def __init__(self, calibrate=False, path=None, deck=None):
-        if calibrate:
-            snapped = threading.Event()
-            kaleb = Calibrator(snapped, path, deck)
-            kaleb.start()
+        # Event that should trigger when camera has finished taking a picture
+        snapped = threading.Event()
+        # Thread will take pictures of the card and trigger the snapped event
+        kaleb = CardPhotographer(snapped)
+        kaleb.start()
 
-            preppy = ImageProcessor(kaleb,snapped)
-            preppy.start()
+        # Thread will process the images Kaleb took when the snapped event triggers it
+        preppy = ImageProcessor(insta,snapped)
+        preppy.start()
 
-            thr = Tester(kaleb, snapped)
-            thr.start()
+        # Thread will constantly poll the pins of the Pi for input and trigger the ready flag when it receives input, signifying that a new card has been pushed out
+        ear = PCBListener(kaleb)
+        ear.start()
 
-        else:
-            snapped = threading.Event()
-            insta = CardPhotographer(snapped)
-            preppy = ImageProcessor(insta,snapped)
-            preppy.start()
-            
+        # Thead will set pin when snapped event is triggered from Kaleb the photographer
+        mouth = PCBTalker(snapped)
+        mouth.start()
 
+        kelloggs = LuckyCharms()
+        kelloggs.start()
+
+        
         
 if __name__=='__main__':
     cr = CardReader()
