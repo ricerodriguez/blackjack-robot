@@ -10,6 +10,45 @@ class ImageProcessor:
         self.im = im
         self.test = test
 
+    def find_rot_box(self,contours):
+        rects = []
+        boxes = []
+        for contour in contours:
+            peri = cv.arcLength(contour,True)
+            poly = cv.approxPolyDP(contour, 0.1*peri, True)
+            rect = cv.minAreaRect(contour)
+            box = cv.boxPoints(rect)
+            box = np.int0(box)
+            rects.append(rect)
+            boxes.append(box)
+        return boxes, rects        
+
+    def crop_to_area(self,im,rects):
+        rect_r = rects[-1]
+        rect_s = rects[-2]
+        width = int(rect_r[1][0]+rect_s[1][0])
+        height = int(rect_r[1][1])
+        box_r = cv.boxPoints(rect_r)
+        box_r = np.int0(box_r)
+        print(box_r)
+        box_s = cv.boxPoints(rect_s)
+        box_s = np.int0(box_s)
+        print(box_s)
+        box = [box_s[0],box_s[1],
+               [max(box_s[2][0],box_r[3][0]),box_s[2][1]],
+               [box_r[3][0],max(box_r[3][1],box_s[3][1])]]
+        box = np.int0(box)
+        print(box)
+        src = box.astype('float32')
+        dst = np.array([[0, height-1],
+                        [0,0],
+                        [width-1,0],
+                        [width-1, height-1]],np.float32)
+        mat = cv.getPerspectiveTransform(src,dst)
+        warp = cv.warpPerspective(im,mat,(width,height))
+        return warp
+        
+
     def real_prep(self,im):
         gray = cv.cvtColor(im, cv.COLOR_BGR2GRAY)
         blur = cv.GaussianBlur(gray,(0,0),2)
@@ -33,7 +72,7 @@ class ImageProcessor:
         matches = {}
         for file in os.listdir(im_path):
             if file.endswith('.png'):
-                print(file)
+                # print(file)
                 test = cv.imread('images/{}'.format(file))
                 # print(test)
                 _,_,_,_,edges0 = self.real_prep(test)
@@ -43,12 +82,14 @@ class ImageProcessor:
                 cont_sort0 = sorted(contours0,key=cv.contourArea,reverse=True)
                 cont_sort1 = sorted(contours1,key=cv.contourArea,reverse=True)
 
-                match = cv.matchShapes(cont_sort0[-1],cont_sort1[-1],cv.CONTOURS_MATCH_I1,1.0)
-                print(match)
-                
+                # boxes0, rects0 = self.find_rot_box(contours0)
+                # boxes1, rects1 = self.find_rot_box(contours1)
+
+                # cropped0 = self.crop_to_area(im)
                 
 
-                
+                # match = cv.matchShapes(cont_sort0[-1],cont_sort1[-1],cv.CONTOURS_MATCH_I1,1.0)
+                # print(match)
 
     def prep(self,im):
         t = self.test
@@ -78,11 +119,27 @@ class ImageProcessor:
         # Masking algorithm from one of the tutorials on OpenCV
         mask = edges != 0
         dst = im * (mask[:,:,None].astype(im.dtype))
+        _, contours, _ = cv.findContours(edges,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE)
+        
+        cont_sort = sorted(contours,key=cv.contourArea,reverse=True)[:2]
+
+        canvas = np.zeros_like(dil)
+        cv.drawContours(canvas,cont_sort,-1,(255,255,0),2)
+        boxes, rects = self.find_rot_box(cont_sort)
+        final_im = np.zeros_like(dil)
+        cv.drawContours(final_im,contours,-1,(255,255,0),2)
+        cropped = self.crop_to_area(final_im,rects)
+
+        
+        
+        
         if t:
+            cv.imshow('contours',canvas)
+            cv.waitKey(0)
             cv.imshow('masked',dst)
             cv.waitKey(0)
 
-        return gray, blur, thresh, ero, dil, edges, dst
+        return gray, blur, thresh, ero, dil, edges, contours, boxes, rects, cropped
 
     # def __sort_cont_area(self,contours,length=5):
     #     cont_sort = sorted(contours,key=cv.contourArea,reverse=True)[:length]
@@ -131,12 +188,10 @@ if __name__=='__main__':
     ch = ImageProcessor(im,test)
     # gray, blur, thresh, ero, dil, edges, masked = ch.prep(im)
     ranksuit = im[345:420,350:505]
-    gray, blur, thresh, ero, dil, edges, masked = ch.prep(ranksuit)
-    _, contours, _ = cv.findContours(edges,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE)
+    gray, blur, thresh, ero, dil, edges, contours, boxes, rects, cropped = ch.prep(ranksuit)
 
     # disp = ch.isolate_rank_suit(contours)
     disp = sorted(contours,key=cv.contourArea,reverse=True)[:2]
-
     
     draw = np.zeros_like(ranksuit)
     cv.drawContours(draw,disp,-1,(255,255,0),2)
@@ -144,12 +199,12 @@ if __name__=='__main__':
     
     # thresh2 = cv.adaptiveThreshold(gray2,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C,cv.THRESH_BINARY_INV,5,1)
 
-    cv.imshow('test',draw)
+    cv.imshow('cropped',cropped)
     cv.waitKey(0)
 
     if (len(sys.argv) >= 2):
-        if not ('-m' in sys.argv[1]):
-            cv.imwrite(sys.argv[2],draw)
+        if not ('-m' in sys.argv[1] or '-t' in sys.argv[1]):
+            cv.imwrite(sys.argv[1],cropped)
         else:
             draw2 = np.zeros_like(ranksuit)
             cv.drawContours(draw2,contours,-1,(255,255,0),2)
