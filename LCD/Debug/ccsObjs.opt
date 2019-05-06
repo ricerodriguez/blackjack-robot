@@ -1,0 +1,1 @@
+"./lcdLib.obj" "./main2.obj" "../lnk_msp430g2533.cmd" -llibc.a 
