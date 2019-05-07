@@ -1,0 +1,101 @@
+Welcome to the blackjack-robot wiki! Team Members Ian Kriner Comp E * Mechanical Design * Communication Rice Rodriguez Comp E * GUI * OCR Aaron Carman EE * Motor controls * PCB design Adrian Flores EE * User Interface * Power Distribution
+
+Table Of Contents (to be updated regularly)
+
+Design
+1.1 Mechanicals
+1.2 Motors
+1.3 GUI
+1.4 OCR
+1.5 User Interface
+1.6 Power Distribution
+Updated Mechanical Design
+3D printing Results
+
+# Results
+The printings came out to be warped and shrunk to much to allow for the bushing to be placed into their proper holes for the flipper. The dealer's side walls were not thick enough and resulted in the base splitting from the walls. Modified the parts, hopefully, the next print will be better.
+
+Update: 3d printing proved to difficult to get consistent results for the mechanical aspects of this project so a wood prototype was made as a substitute, It kept all major design aspects of the 3d printed one but was made of MDF cut and drilled into the sides then glued together. The resulting prototype proved usable and consistent in dealing results.
+
+# Design
+   Here is the original Design plans for the Automated Black Jack Dealer
+
+## Mechanics
+  Originally the dealer was designed to have the following mechanical parts to handle the cards
+    1. Dealer
+    2. Flipper
+    3. Shuffler
+    4. Splitter
+
+### Dealer
+Designed to use a servo to deal a single card into the flipper and allow for the Camera to image the card from underneath
+The card bay was sized to fit a standard deck (3.5" by 2.5") with .1" extra to prevent jams.
+There is a slot on the bottom for a servo arm to push the card into the flipper
+A cut out for the top left of the bottom serves as a window for the camera to image the suit and value of the card from.
+
+### Flipper
+Designed to flip the cards as needed or just shoot them out by directing the card either up to flip or down to deal
+uses a rubber belt to pull the card up or down
+powered by a dc motor that changes direction as needed for the belt and another dc motor to shoot the cards out 
+by using two opposing wheels
+
+### Shuffler 
+Designed to shuffle two decks together by pushing the cards into one another into the card bay of the dealer
+Uses two DC motors that spin in a single direction with wheels on them to push the cards through slots in the side wall
+the wheels are exposed through a slot in the bottom of the shuffler to allow for gravity to push the cards into the wheel
+
+### Splitter
+Uses a bi directional motor with a wheel to split the deck into the two bays of the shuffler 
+sits ontop of the shuffler
+
+### GUI
+
+The gui displays each players hand, score, and bet onto a monitor handled by the RPI. During set up you can set the number of players and their names.
+
+### OCR
+
+The card dealer would use a camera to image the top left corner of each card and using OCR algorithms on the filtered contour image to get the rank and suit of each card for use by the gui and the dealer algorithm.  
+
+### PCB DESIGN
+
+A controller board that connected to the RPI via serial was designed to control the 2 sets of DC motors and the 2 servos. It controlled the dealer motor via a Darlington pair and the shuffler motors via a relay. The Servos were controlled by a mosfet that had a pwm from the msp430. The msp430 controlled these motors via commands from the RPI. Diodes were used for the flyback on the dc motors.
+
+### PUI
+
+# PUI
+Uses a 16x2 lcd screen and 3 buttons to allow the user to select their play move and set their bet. Originally communicated with the RPI through an rs485 transceiver but due to priority issues, this method was ditched in place of a direct serial connection via UART on the msp430 TX and RX lines. The user interface was implemented on a half board and tested with a state machine code. It would send back a two digit number after every selection by the players with the first digit being the player number and the second the play choice. At initialization, the RPI would send a string to it with the player's initials so that the PUI could display who's turn it was
+
+### ROTATION
+
+The rotation was handled by a servo mounted to a small lazy Susan. Everything was mounted onto the top of this and turned with the servo.
+
+
+### TESTING
+
+Testing was done in parts and showed that individually the dealer worked in conjunction with the controller board and the PUI worked. The OCR proved temperamental and could not recognize cards sometimes.
+
+### UPDATED DESIGN
+
+# Updates
+Due to the complexity of the original design, several parts have been cut out and the rules 
+have been modified to make the operation smoother and faster.
+
+## Splitter 
+   has been ditched
+## Flipper  
+   has been ditched 
+
+## Dealer 
+   *Cards will no longer be face down so the camera location must change to the front of the dealer
+   *The servo will now only push the card out enough to reveal the suit and value of the card before
+    pushing it into the opposing wheels to shoot the card out   
+   *The dealer will now include the wheels to shoot the card out instead of the flipper 
+## Shuffler
+   *Slight incline on the card bays to allow the cards to flow better into the shuffle
+   
+
+
+
+
+ 
+
